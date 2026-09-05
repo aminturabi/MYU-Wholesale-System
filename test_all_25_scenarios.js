@@ -48,14 +48,14 @@ function check(testNumber, testName, condition, details = "") {
 storage.clearAllData();
 
 // 1. Cash sale without discount
-const prod1 = storage.addProduct({ name: "Augmentin", availableQty: 100, tp: 200, salePrice: 250 });
+const prod1 = storage.addProduct({ name: "Augmentin", availableQty: 100, tp: 200, purchaseCost: 150, purchaseDiscount: 25, salePrice: 200 });
 const sale1 = storage.addSale({
   customerId: "CUST-WALKIN", customerName: "Walk-in", paymentMethod: "Cash",
-  items: [{ productId: prod1.id, name: prod1.name, quantity: 2, bonus: 0, price: 250, tp: 200, discountPercent: 0, extPercent: 0, taxPercent: 0 }],
-  grossTotal: 500, netAmount: 500, paidAmount: 500, remainingBalance: 0
+  items: [{ productId: prod1.id, name: prod1.name, quantity: 2, bonus: 0, price: 200, tp: 200, purchaseCost: 150, discountPercent: 0, extPercent: 0, taxPercent: 0 }],
+  grossTotal: 400, netAmount: 400, paidAmount: 400, remainingBalance: 0
 });
 check(1, "Normal Cash Sale without discount", 
-  sale1.netAmount === 500 && sale1.paidAmount === 500 && sale1.remainingBalance === 0 && sale1.totalProfit === 100 && sale1.status === "Paid"
+  sale1.netAmount === 400 && sale1.paidAmount === 400 && sale1.remainingBalance === 0 && sale1.totalProfit === 100 && sale1.status === "Paid"
 );
 
 // 2. Credit sale
@@ -63,61 +63,61 @@ const cust1 = storage.addCustomer({ name: "Ali Pharmacy", openingBalance: 0 });
 const sale2 = storage.addSale({
   customerId: cust1.id, customerName: cust1.name, paymentMethod: "Credit",
   items: [{ productId: prod1.id, name: prod1.name, quantity: 4, bonus: 0, price: 250, tp: 200, discountPercent: 0, extPercent: 0, taxPercent: 0 }],
-  grossTotal: 1000, netAmount: 1000, paidAmount: 0, remainingBalance: 1000
+  grossTotal: 800, netAmount: 800, paidAmount: 0, remainingBalance: 800
 });
 const cust1AfterSale2 = storage.getCustomers().find(c => c.id === cust1.id);
 check(2, "Normal Credit Sale", 
-  sale2.remainingBalance === 1000 && sale2.status === "Unpaid" && cust1AfterSale2.remainingBalance === 1000
+  sale2.remainingBalance === 800 && sale2.status === "Unpaid" && cust1AfterSale2.remainingBalance === 800
 );
 
 // 3. Partially paid sale
 const sale3 = storage.addSale({
   customerId: cust1.id, customerName: cust1.name, paymentMethod: "Credit",
-  items: [{ productId: prod1.id, name: prod1.name, quantity: 2, bonus: 0, price: 250, tp: 200, discountPercent: 0, extPercent: 0, taxPercent: 0 }],
-  grossTotal: 500, netAmount: 500, paidAmount: 200, remainingBalance: 300
+  items: [{ productId: prod1.id, name: prod1.name, quantity: 2, bonus: 0, price: 200, tp: 200, discountPercent: 0, extPercent: 0, taxPercent: 0 }],
+  grossTotal: 400, netAmount: 400, paidAmount: 200, remainingBalance: 200
 });
 check(3, "Partially Paid Sale", 
-  sale3.paidAmount === 200 && sale3.remainingBalance === 300 && sale3.status === "Partially Paid"
+  sale3.paidAmount === 200 && sale3.remainingBalance === 200 && sale3.status === "Partially Paid"
 );
 
 // 4. Sale with primary discount (10%)
-const lineDisc = Utils.calcWholesaleLine(10, 100, 0, 10, 0, 0, 70);
+const lineDisc = Utils.calcWholesaleLine(10, 100, 0, 10, 0, 0, 100, 70, 30);
 check(4, "Sale with Primary Discount",
   lineDisc.grossSubtotal === 1000 && lineDisc.disAmount === 100 && lineDisc.taxableBase === 900 && lineDisc.lineAmount === 900 && lineDisc.profit === 200
 );
 
 // 5. Sale with primary (10%) + extra discount (5%)
-const lineExt = Utils.calcWholesaleLine(10, 100, 0, 10, 5, 0, 70);
+const lineExt = Utils.calcWholesaleLine(10, 100, 0, 10, 5, 0, 100, 70, 30);
 check(5, "Sale with Primary + Extra Discount (extra applied on remaining after primary)",
   lineExt.grossSubtotal === 1000 && lineExt.disAmount === 100 && lineExt.extAmount === 45 && lineExt.taxableBase === 855 && lineExt.profit === 155
 );
 
 // 6. Taxable sale with Tax (17%)
-const lineTax = Utils.calcWholesaleLine(10, 100, 0, 0, 0, 17, 70);
+const lineTax = Utils.calcWholesaleLine(10, 100, 0, 0, 0, 17, 100, 70, 30);
 // Gross=1000, TaxableBase=1000, Tax=170, LineAmount=1170, COGS=700, Gross Profit=1000-700=300 (Tax excluded from profit)
 check(6, "Taxable sale with Tax (Tax does NOT inflate profit)",
   lineTax.taxableBase === 1000 && lineTax.taxAmount === 170 && lineTax.lineAmount === 1170 && lineTax.profit === 300
 );
 
 // 7. Sale with bonus units (10 sold + 2 bonus)
-const lineBonus = Utils.calcWholesaleLine(10, 100, 2, 0, 0, 0, 70);
+const lineBonus = Utils.calcWholesaleLine(10, 100, 2, 0, 0, 0, 100, 70, 30);
 // Stock deduction = 12, COGS = 12 * 70 = 840, Gross Profit = 1000 - 840 = 160
 check(7, "Sale with Bonus Units (COGS includes bonus units: 12 x 70 = 840)",
   lineBonus.stockDeduction === 12 && lineBonus.cogs === 840 && lineBonus.profit === 160
 );
 
 // 8. Multiple products on one invoice
-const prod2 = storage.addProduct({ name: "Panadol", availableQty: 200, tp: 30, salePrice: 40 });
+const prod2 = storage.addProduct({ name: "Panadol", availableQty: 200, tp: 30, purchaseCost: 20, salePrice: 30 });
 const sale8 = storage.addSale({
   customerId: cust1.id, customerName: cust1.name, paymentMethod: "Credit",
   items: [
-    { productId: prod1.id, quantity: 2, bonus: 0, price: 250, tp: 200, discountPercent: 0, extPercent: 0, taxPercent: 0 },
-    { productId: prod2.id, quantity: 10, bonus: 1, price: 40, tp: 30, discountPercent: 5, extPercent: 0, taxPercent: 0 }
+    { productId: prod1.id, quantity: 2, bonus: 0, price: 200, tp: 200, purchaseCost: 150, discountPercent: 0, extPercent: 0, taxPercent: 0 },
+    { productId: prod2.id, quantity: 10, bonus: 1, price: 30, tp: 30, purchaseCost: 20, discountPercent: 5, extPercent: 0, taxPercent: 0 }
   ],
-  grossTotal: 900, totalDiscount: 20, netAmount: 880, paidAmount: 0, remainingBalance: 880
+  grossTotal: 700, totalDiscount: 15, netAmount: 685, paidAmount: 0, remainingBalance: 685
 });
 check(8, "Multiple Products on One Invoice",
-  sale8.items.length === 2 && sale8.netAmount === 880 && sale8.totalCOGS === (2*200 + 11*30)
+  sale8.items.length === 2 && sale8.netAmount === 685 && sale8.totalCOGS === (2*150 + 11*20)
 );
 
 // 9. Partial return

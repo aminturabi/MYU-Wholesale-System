@@ -61,7 +61,7 @@ console.log("--- 1. Testing Sales / POS Line Item Formulas ---");
 // 2.2 COGS = 12 * 70 = 840
 // 2.3 Gross Profit (Tax separated) = 855 - 840 = 15
 
-const line = Utils.calcWholesaleLine(10, 100, 2, 10, 5, 17, 70);
+const line = Utils.calcWholesaleLine(10, 100, 2, 10, 5, 17, 100, 70);
 assert(line.grossSubtotal === 1000, "1.1 Gross Amount is 1000", line.grossSubtotal);
 assert(line.disAmount === 100, "1.2 Primary Discount is 100", line.disAmount);
 assert(line.extAmount === 45, "1.4 Extra Discount after primary is 45", line.extAmount);
