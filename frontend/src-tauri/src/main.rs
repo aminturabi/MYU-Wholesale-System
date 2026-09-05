@@ -18,7 +18,7 @@ struct DbResponse {
 }
 
 fn get_app_dir() -> PathBuf {
-    let mut dir = directories::ProjectDirs::from("com", "myu", "wholesalesystem")
+    let dir = directories::ProjectDirs::from("com", "myu", "wholesalesystem")
         .map(|proj| proj.data_dir().to_path_buf())
         .unwrap_or_else(|| PathBuf::from("./data"));
     

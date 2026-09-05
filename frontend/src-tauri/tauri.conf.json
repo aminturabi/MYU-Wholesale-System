@@ -1,9 +1,9 @@
 {
   "build": {
-    "beforeDevCommand": "",
-    "beforeBuildCommand": "",
-    "devPath": "../",
-    "distDir": "../"
+    "beforeDevCommand": "node prepare-dist.js",
+    "beforeBuildCommand": "node prepare-dist.js",
+    "devPath": "../dist",
+    "distDir": "../dist"
   },
   "package": {
     "productName": "MYU Medicine & Surgical Wholesale Management System",
@@ -38,7 +38,7 @@
     },
     "bundle": {
       "active": true,
-      "targets": ["msi", "nsis"],
+      "targets": ["nsis"],
       "identifier": "com.myu.wholesalesystem",
       "icon": [
         "icons/32x32.png",
