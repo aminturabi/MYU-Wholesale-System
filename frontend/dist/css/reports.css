@@ -1,0 +1,183 @@
+/* Invoice Voucher & Print Styles */
+.invoice-voucher-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.invoice-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.invoice-logo-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.invoice-logo-title img {
+  height: 54px;
+  width: auto;
+}
+
+.invoice-shop-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1.1;
+}
+
+.invoice-shop-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.invoice-meta-right {
+  text-align: right;
+}
+
+.invoice-number-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.invoice-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 20px;
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-color);
+}
+
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.invoice-table th {
+  background: #f1f5f9;
+  padding: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.invoice-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.85rem;
+}
+
+.invoice-totals-box {
+  width: 320px;
+  margin-left: auto;
+  border-top: 2px solid var(--border-color);
+  padding-top: 10px;
+}
+
+.invoice-total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 0.88rem;
+}
+
+.invoice-total-row.grand-total {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--primary);
+  border-top: 1px solid var(--border-color);
+  margin-top: 6px;
+  padding-top: 8px;
+}
+
+/* Print Stylesheet */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 5mm !important;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  #app-container,
+  .modal-backdrop-myu,
+  .modal-backdrop-myu.show,
+  .modal-backdrop-myu.active,
+  .modal-box,
+  #sidebar,
+  #main-content,
+  .top-header,
+  .btn-primary-myu,
+  .btn-secondary-myu,
+  .modal-footer-myu,
+  .modal-close-btn,
+  #toast-container,
+  .no-print {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
+  #printable-invoice,
+  #printable-invoice * {
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  #printable-invoice {
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    z-index: 999999 !important;
+  }
+
+  #printable-invoice table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  #printable-invoice tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .invoice-voucher-box {
+    border: none !important;
+    padding: 0 !important;
+  }
+}
