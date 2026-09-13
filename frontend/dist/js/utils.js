@@ -76,14 +76,12 @@ const Utils = {
           let unitCost = Math.max(0, parseFloat(purchaseCost) || 0);
           let purDisc = Math.max(0, parseFloat(purchaseDiscount) || 0);
 
-          if (!unitCost && tradePrice > 0) {
-            if (purDisc > 0) {
-              unitCost = Utils.round(tradePrice * (1 - purDisc / 100), 4);
-            } else {
-              unitCost = Utils.round(tradePrice * 0.85, 4);
-              purDisc = 15;
-            }
-          } else if (unitCost > 0 && purDisc === 0 && tradePrice > unitCost) {
+          if (purDisc > 0 && tradePrice > 0) {
+            unitCost = Utils.round(tradePrice * (1 - purDisc / 100), 4);
+          } else if (!unitCost && tradePrice > 0) {
+            unitCost = Utils.round(tradePrice * 0.85, 4);
+            purDisc = 15;
+          } else if (unitCost > 0 && tradePrice > 0) {
             purDisc = Utils.round(((tradePrice - unitCost) / tradePrice) * 100, 2);
           }
 
@@ -108,14 +106,11 @@ const Utils = {
           const lineAmount = Utils.round(taxableBase + taxAmount, 2);                     // Line Net Revenue
           const netUnitPrice = q > 0 ? Utils.round(lineAmount / q, 4) : billedNetRate;    // Effective Net Rate per Unit
 
-          // 3. Inventory & COGS Tracking (Includes bonus stock)
-          const totalQty = q + bns;                                                       // Total items leaving stock
-          const lineCogs = Utils.round(totalQty * unitCost, 2);                           // Total cost of stock sold
-
-          // 4. Dynamic Profit Margin & Line Profit Calculation
-          // Line Profit = Taxable Base (Net Revenue before Tax) - Total COGS
-          const lineProfit = Utils.round(taxableBase - lineCogs, 2);
-          const marginPercent = lineGross > 0 ? Utils.round((lineProfit / lineGross) * 100, 2) : Utils.round(purDisc - (dis + ext), 2);
+          // 3. Inventory & COGS Tracking
+          const totalQty = q + bns;
+          const marginPercent = Utils.round(purDisc - (dis + ext), 2);
+          const lineProfit = Utils.round(lineAmount * (marginPercent / 100), 2);
+          const lineCogs = Utils.round(lineAmount - lineProfit, 2);
           const unitProfit = q > 0 ? Utils.round(lineProfit / q, 4) : 0;
           const purchaseDiscountPercent = purDisc;
           const effectiveSaleDiscountPercent = tradePrice > 0 ? Utils.round((totalUnitDiscount / tradePrice) * 100, 2) : 0;

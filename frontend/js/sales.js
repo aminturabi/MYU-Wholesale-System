@@ -81,10 +81,24 @@ class SalesModule {
     filtered.slice().reverse().forEach(s => {
       const saleId = s.id || s.invoiceNumber;
       const isExpanded = this.expandedSaleIds && this.expandedSaleIds.has(saleId);
-      const totalProfit = s.totalProfit !== undefined ? parseFloat(s.totalProfit) : 0;
-      let totalGrossTP = (s.items || []).reduce((sum, item) => sum + ((parseInt(item.quantity) || 0) * (parseFloat(item.tp || item.price) || 0)), 0);
-      if (!totalGrossTP || totalGrossTP <= 0) totalGrossTP = parseFloat(s.grossTotal) || parseFloat(s.netAmount) || 0;
-      const marginPercent = totalGrossTP > 0 ? Utils.round((totalProfit / totalGrossTP) * 100, 1) : 0;
+      let totalProfit = 0;
+      const totalNet = parseFloat(s.netAmount) || 0;
+      (s.items || []).forEach(item => {
+        const q = parseInt(item.quantity) || 0;
+        const bns = parseInt(item.bonus) || 0;
+        const price = parseFloat(item.price) || 0;
+        const tp = parseFloat(item.tp || item.tradePrice) || price;
+        const dis = parseFloat(item.discountPercent !== undefined ? item.discountPercent : item.discount) || 0;
+        const ext = parseFloat(item.extPercent) || 0;
+        const tax = parseFloat(item.taxPercent) || 0;
+        const purchaseCost = parseFloat(item.purchaseCost) || (tp * 0.85);
+        const purchaseDiscount = parseFloat(item.purchaseDiscountPercent !== undefined ? item.purchaseDiscountPercent : (item.purchaseDiscount || 0)) || (tp > 0 ? Utils.round(((tp - purchaseCost) / tp) * 100, 2) : 0);
+        const calc = Utils.calcWholesaleLine(q, price, bns, dis, ext, tax, tp, purchaseCost, purchaseDiscount);
+        totalProfit += calc.profit;
+      });
+      if (!totalProfit && s.totalProfit !== undefined) totalProfit = parseFloat(s.totalProfit);
+      totalProfit = Utils.round(totalProfit, 2);
+      const marginPercent = totalNet > 0 ? Utils.round((totalProfit / totalNet) * 100, 1) : 0;
       const isProfitPositive = totalProfit >= 0;
       const profitSign = isProfitPositive ? '+' : '';
       const marginBadge = `
@@ -114,8 +128,8 @@ class SalesModule {
           };
 
           const lineNet = item.totalAmount !== undefined ? parseFloat(item.totalAmount) : (calc.lineAmount || 0);
-          const lineProfit = item.itemProfit !== undefined ? parseFloat(item.itemProfit) : (calc.profit !== undefined ? calc.profit : 0);
-          const lineMargin = item.marginPercent !== undefined ? parseFloat(item.marginPercent) : (item.realizedMarginPercent !== undefined ? parseFloat(item.realizedMarginPercent) : (calc.marginPercent !== undefined ? calc.marginPercent : (tp > 0 && q > 0 ? Utils.round((lineProfit / (q * tp)) * 100, 1) : 0)));
+          const lineProfit = calc.profit !== undefined ? calc.profit : (item.itemProfit !== undefined ? parseFloat(item.itemProfit) : 0);
+          const lineMargin = calc.marginPercent !== undefined ? calc.marginPercent : (item.marginPercent !== undefined ? parseFloat(item.marginPercent) : 0);
 
           const isLineProfitPositive = lineProfit >= 0;
           const lineProfitSign = isLineProfitPositive ? '+' : '';

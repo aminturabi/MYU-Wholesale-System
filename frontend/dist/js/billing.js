@@ -336,8 +336,10 @@ class BillingModule {
       this.updateItemTotal(existingIdx);
     } else {
       const tpVal = parseFloat(prod.tp || prod.tradePrice) || (parseFloat(prod.salePrice) || 0);
-      const costVal = parseFloat(prod.purchaseCost || prod.purchasePrice || prod.costPrice) || (tpVal * 0.85);
-      const purDiscVal = parseFloat(prod.purchaseDiscount !== undefined ? prod.purchaseDiscount : prod.discount) || (tpVal > 0 ? Utils.round(((tpVal - costVal) / tpVal) * 100, 2) : 0);
+      const purDiscVal = parseFloat(prod.purchaseDiscount !== undefined ? prod.purchaseDiscount : prod.discount) || (parseFloat(prod.purchaseDiscountPercent) || 0);
+      let costVal = (purDiscVal > 0 && tpVal > 0)
+        ? Utils.round(tpVal * (1 - purDiscVal / 100), 4)
+        : (parseFloat(prod.purchaseCost || prod.purchasePrice || prod.costPrice) || (tpVal * 0.85));
       const defaultTax = parseFloat(prod.advanceTax !== undefined ? prod.advanceTax : (prod.taxPercent !== undefined ? prod.taxPercent : (prod.tax !== undefined ? prod.tax : 0))) || 0;
 
       const item = {
@@ -534,12 +536,15 @@ class BillingModule {
     const item = this.cartItems[index];
     if (!item) return;
 
-    // Purchase Discount %: derived or retrieved
+    // Purchase Discount %: derived from TP & Cost
     const tpRef = parseFloat(item.tp || item.price) || 0;
-    const costRef = parseFloat(item.purchaseCost) || (tpRef * 0.85);
     const purchaseDis = item.purchaseDiscountPercent !== undefined && item.purchaseDiscountPercent !== 0 
       ? parseFloat(item.purchaseDiscountPercent) 
-      : (tpRef > 0 ? Utils.round(((tpRef - costRef) / tpRef) * 100, 2) : 0);
+      : (tpRef > 0 && item.purchaseCost ? Utils.round(((tpRef - item.purchaseCost) / tpRef) * 100, 2) : 0);
+    const costRef = (purchaseDis > 0 && tpRef > 0) 
+      ? Utils.round(tpRef * (1 - purchaseDis / 100), 4) 
+      : (parseFloat(item.purchaseCost) || (tpRef * 0.85));
+    item.purchaseCost = costRef;
     item.purchaseDiscountPercent = purchaseDis;
 
     const calc = Utils.calcWholesaleLine(
@@ -554,6 +559,7 @@ class BillingModule {
       item.purchaseDiscountPercent
     );
     item.totalQty = calc.totalQty;
+    item.purchaseDiscountPercent = calc.purchaseDiscountPercent;
     item.disAmount = calc.disAmount;
     item.extAmount = calc.extAmount;
     item.taxAmount = calc.taxAmount;
@@ -575,7 +581,7 @@ class BillingModule {
     item.isLoss = isBelowCost;
     item.unitLoss = isBelowCost ? Math.abs(calc.unitProfit) : 0;
     item.totalLoss = isBelowCost ? Math.abs(calc.profit) : 0;
-    item.breakEvenDiscount = purchaseDis;
+    item.breakEvenDiscount = item.purchaseDiscountPercent;
   }
 
   removeCartItem(index) {

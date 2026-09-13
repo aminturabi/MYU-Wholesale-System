@@ -266,8 +266,10 @@ const STORAGE_KEYS = {
             const cIdx = customers.findIndex(c => (item.customerId && c.id === item.customerId) || (item.customerName && c.name === item.customerName));
             if (cIdx !== -1) {
               customers[cIdx].totalPurchases = Utils.round((customers[cIdx].totalPurchases || 0) - totalRefund);
-              const isCreditAdj = ['Credit Adjustment', 'Credit Balance Adjustment', 'Adjust Customer Balance', 'Credit Note', 'Customer Credit'].includes(item.paymentMethod);
-              if (isCreditAdj) {
+              const origSale = this.getSales().find(s => (item.saleId && s.id === item.saleId) || (item.invoiceNumber && s.invoiceNumber === item.invoiceNumber));
+              const isSaleUnpaid = origSale && (origSale.remainingBalance > 0 || origSale.paymentMethod === 'Credit' || origSale.paidAmount < origSale.netAmount);
+              const isCreditAdj = ['Credit Adjustment', 'Credit Balance Adjustment', 'Adjust Customer Balance', 'Credit Note', 'Customer Credit', 'Credit'].includes(item.paymentMethod);
+              if (isCreditAdj || isSaleUnpaid || !origSale) {
                 customers[cIdx].remainingBalance = Utils.round((customers[cIdx].remainingBalance || 0) - totalRefund);
               } else {
                 customers[cIdx].totalPaid = Utils.round((customers[cIdx].totalPaid || 0) - totalRefund);
@@ -303,8 +305,10 @@ const STORAGE_KEYS = {
               if (cIdx !== -1) {
                 const refund = Utils.round(item.totalRefundAmount || 0);
                 customers[cIdx].totalPurchases = Utils.round((customers[cIdx].totalPurchases || 0) + refund);
-                const isCreditAdj = ['Credit Adjustment', 'Credit Balance Adjustment', 'Adjust Customer Balance', 'Credit Note', 'Customer Credit'].includes(item.paymentMethod);
-                if (isCreditAdj) {
+                const origSale = this.getSales().find(s => (item.saleId && s.id === item.saleId) || (item.invoiceNumber && s.invoiceNumber === item.invoiceNumber));
+                const isSaleUnpaid = origSale && (origSale.remainingBalance > 0 || origSale.paymentMethod === 'Credit' || origSale.paidAmount < origSale.netAmount);
+                const isCreditAdj = ['Credit Adjustment', 'Credit Balance Adjustment', 'Adjust Customer Balance', 'Credit Note', 'Customer Credit', 'Credit'].includes(item.paymentMethod);
+                if (isCreditAdj || isSaleUnpaid || !origSale) {
                   customers[cIdx].remainingBalance = Utils.round((customers[cIdx].remainingBalance || 0) + refund);
                 } else {
                   customers[cIdx].totalPaid = Utils.round((customers[cIdx].totalPaid || 0) + refund);
@@ -314,6 +318,58 @@ const STORAGE_KEYS = {
             }
 
             this.saveReturns(list.filter(r => r.id !== id));
+          }
+        }
+
+        recalculateAllCustomerBalances() {
+          const customers = this.get(STORAGE_KEYS.CUSTOMERS, []);
+          const sales = this.get(STORAGE_KEYS.SALES, []);
+          const returns = this.get(STORAGE_KEYS.RETURNS, []);
+          const payments = this.get(STORAGE_KEYS.CUSTOMER_PAYMENTS, []);
+
+          let modified = false;
+          customers.forEach(cust => {
+            const opening = parseFloat(cust.openingBalance) || 0;
+            let totalDirectPay = 0;
+
+            payments.forEach(p => {
+              if (p.customerId === cust.id || (p.customerName && cust.name && p.customerName.trim().toLowerCase() === cust.name.trim().toLowerCase())) {
+                totalDirectPay += (parseFloat(p.amount) || 0);
+              }
+            });
+
+            let salesUnpaid = 0;
+            sales.forEach(s => {
+              if (s.customerId === cust.id || (s.customerName && cust.name && s.customerName.trim().toLowerCase() === cust.name.trim().toLowerCase())) {
+                const net = parseFloat(s.netAmount) || 0;
+                const paid = parseFloat(s.paidAmount) || 0;
+                salesUnpaid += (net - paid);
+              }
+            });
+
+            let returnsDeducted = 0;
+            returns.forEach(r => {
+              if (r.customerId === cust.id || (r.customerName && cust.name && r.customerName.trim().toLowerCase() === cust.name.trim().toLowerCase())) {
+                const refund = parseFloat(r.totalRefundAmount) || 0;
+                const origSale = sales.find(s => (r.saleId && s.id === r.saleId) || (r.invoiceNumber && s.invoiceNumber === r.invoiceNumber));
+                const isSaleUnpaid = origSale && (origSale.remainingBalance > 0 || origSale.paymentMethod === 'Credit' || origSale.paidAmount < origSale.netAmount);
+                const isCreditAdj = ['Credit Adjustment', 'Credit Balance Adjustment', 'Adjust Customer Balance', 'Credit Note', 'Customer Credit', 'Credit'].includes(r.paymentMethod);
+                if (isCreditAdj || isSaleUnpaid || !origSale) {
+                  returnsDeducted += refund;
+                }
+              }
+            });
+
+            const calculatedRemaining = Utils.round(opening + salesUnpaid - returnsDeducted - totalDirectPay, 2);
+
+            if (cust.remainingBalance !== calculatedRemaining) {
+              cust.remainingBalance = calculatedRemaining;
+              modified = true;
+            }
+          });
+
+          if (modified) {
+            this.saveCustomers(customers);
           }
         }
 

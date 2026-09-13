@@ -1,60 +1,60 @@
 /* ==================== PRODUCTS & INVENTORY MODULE ==================== */
 class ProductsModule {
-        constructor() {
-          this.stagedPurchaseItems = [];
-          this.bindEvents();
-        }
+  constructor() {
+    this.stagedPurchaseItems = [];
+    this.bindEvents();
+  }
 
-        bindEvents() {
-          const search = document.getElementById('prod-search-input');
-          const cat = document.getElementById('prod-category-filter');
-          if (search) search.addEventListener('input', () => this.renderProducts());
-          if (cat) cat.addEventListener('change', () => this.renderProducts());
+  bindEvents() {
+    const search = document.getElementById('prod-search-input');
+    const cat = document.getElementById('prod-category-filter');
+    if (search) search.addEventListener('input', () => this.renderProducts());
+    if (cat) cat.addEventListener('change', () => this.renderProducts());
 
-          const invSearch = document.getElementById('inv-search-input');
-          const invStatus = document.getElementById('inv-status-filter');
-          if (invSearch) invSearch.addEventListener('input', () => this.renderInventory());
-          if (invStatus) invStatus.addEventListener('change', () => this.renderInventory());
+    const invSearch = document.getElementById('inv-search-input');
+    const invStatus = document.getElementById('inv-status-filter');
+    if (invSearch) invSearch.addEventListener('input', () => this.renderInventory());
+    if (invStatus) invStatus.addEventListener('change', () => this.renderInventory());
 
-          const expFilter = document.getElementById('expiry-filter-select');
-          if (expFilter) expFilter.addEventListener('change', () => this.renderExpiry());
+    const expFilter = document.getElementById('expiry-filter-select');
+    if (expFilter) expFilter.addEventListener('change', () => this.renderExpiry());
 
-          const prodForm = document.getElementById('product-form');
-          if (prodForm) prodForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const editId = document.getElementById('prod-edit-id')?.value;
-            if (editId) {
-              this.saveSingleProductEdit();
-            } else {
-              this.stageCurrentItem();
-            }
-          });
-        }
+    const prodForm = document.getElementById('product-form');
+    if (prodForm) prodForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const editId = document.getElementById('prod-edit-id')?.value;
+      if (editId) {
+        this.saveSingleProductEdit();
+      } else {
+        this.stageCurrentItem();
+      }
+    });
+  }
 
-        renderProducts() {
-          const tbody = document.getElementById('products-tbody');
-          if (!tbody) return;
+  renderProducts() {
+    const tbody = document.getElementById('products-tbody');
+    if (!tbody) return;
 
-          const products = storage.getProducts();
-          const settings = storage.getSettings();
+    const products = storage.getProducts();
+    const settings = storage.getSettings();
 
-          const query = (document.getElementById('prod-search-input').value || '').toLowerCase().trim();
-          const category = document.getElementById('prod-category-filter').value || '';
+    const query = (document.getElementById('prod-search-input').value || '').toLowerCase().trim();
+    const category = document.getElementById('prod-category-filter').value || '';
 
-          const filtered = products.filter(p => {
-            const matchQuery = !query || p.name.toLowerCase().includes(query) || (p.genericName || '').toLowerCase().includes(query) || p.itemNo.toLowerCase().includes(query) || (p.company || '').toLowerCase().includes(query) || (p.batchNumber || '').toLowerCase().includes(query);
-            return matchQuery && (!category || p.category === category);
-          });
+    const filtered = products.filter(p => {
+      const matchQuery = !query || p.name.toLowerCase().includes(query) || (p.genericName || '').toLowerCase().includes(query) || p.itemNo.toLowerCase().includes(query) || (p.company || '').toLowerCase().includes(query) || (p.batchNumber || '').toLowerCase().includes(query);
+      return matchQuery && (!category || p.category === category);
+    });
 
-          if (!filtered.length) { Utils.emptyTable(tbody, 11, 'No products found matching search criteria.'); return; }
+    if (!filtered.length) { Utils.emptyTable(tbody, 11, 'No products found matching search criteria.'); return; }
 
-          let html = '';
-          filtered.forEach(p => {
-            const isOut = p.availableQty <= 0;
-            const isLow = !isOut && p.availableQty <= (p.minStockLevel || settings.minStockAlert);
-            const statusText = isOut ? 'Out of Stock' : (isLow ? 'Low Stock' : 'In Stock');
+    let html = '';
+    filtered.forEach(p => {
+      const isOut = p.availableQty <= 0;
+      const isLow = !isOut && p.availableQty <= (p.minStockLevel || settings.minStockAlert);
+      const statusText = isOut ? 'Out of Stock' : (isLow ? 'Low Stock' : 'In Stock');
 
-            html += `
+      html += `
             <tr>
               <td><span style="font-weight: 700; color: var(--primary);">${p.itemNo}</span></td>
               <td><div style="font-weight: 700;">${p.name}</div><div style="font-size: 0.75rem; color: var(--text-muted);">${p.genericName || 'N/A'}</div></td>
@@ -74,369 +74,371 @@ class ProductsModule {
               </td>
             </tr>
           `;
-          });
-          tbody.innerHTML = html;
-        }
+    });
+    tbody.innerHTML = html;
+  }
 
-        populateCompanyDropdown(selectedCompany = '') {
-          const select = document.getElementById('pm-company');
-          if (!select) return;
-          const companies = storage.getCompanies();
-          Utils.populateSelect(select, companies, 'name', 'name', selectedCompany, '-- Select Company / Supplier --');
-        }
+  populateCompanyDropdown(selectedCompany = '') {
+    const select = document.getElementById('pm-company');
+    if (!select) return;
+    const companies = storage.getCompanies();
+    Utils.populateSelect(select, companies, 'name', 'name', selectedCompany, '-- Select Company / Supplier --');
+  }
 
-        initPricingCalculator() {
-          const rpInput = document.getElementById('pm-retail-price');
-          const tpInput = document.getElementById('pm-tp');
-          const discInput = document.getElementById('pm-discount-percent');
-          const taxInput = document.getElementById('pm-advance-tax');
-          const costInput = document.getElementById('pm-purchase-cost');
-          const purQtyInput = document.getElementById('pm-purchased-qty');
-          const totalNetInput = document.getElementById('pm-total-net');
+  initPricingCalculator() {
+    const rpInput = document.getElementById('pm-retail-price');
+    const tpInput = document.getElementById('pm-tp');
+    const discInput = document.getElementById('pm-discount-percent');
+    const taxInput = document.getElementById('pm-advance-tax');
+    const costInput = document.getElementById('pm-purchase-cost');
+    const purQtyInput = document.getElementById('pm-purchased-qty');
+    const totalNetInput = document.getElementById('pm-total-net');
 
-          const calculateUnitCost = (tp, disPercent, advTaxPercent) => {
-            if (tp <= 0) return 0;
-            const unitDiscount = (tp * disPercent) / 100;
-            const advTaxAmount = (tp * advTaxPercent) / 100;
-            return (tp - unitDiscount) + advTaxAmount;
-          };
+    const calculateUnitCost = (tp, disPercent) => {
+      if (tp <= 0) return 0;
+      const unitDiscount = (tp * disPercent) / 100;
+      return tp - unitDiscount;
+    };
 
-          const updateTotalNet = () => {
-            const qty = parseInt(purQtyInput ? purQtyInput.value : 0) || 0;
-            const tp = parseFloat(tpInput ? tpInput.value : 0) || 0;
-            const dis = (discInput && discInput.value !== '' && !isNaN(parseFloat(discInput.value))) ? parseFloat(discInput.value) : 25;
-            const tax = (taxInput && taxInput.value !== '' && !isNaN(parseFloat(taxInput.value))) ? parseFloat(taxInput.value) : 0;
-            
-            // Maintain high-precision unrounded unit cost for line total calculation
-            let unitCost = parseFloat(costInput ? costInput.value : 0) || 0;
-            if (tp > 0) {
-              unitCost = calculateUnitCost(tp, dis, tax);
-            }
-            const total = Utils.round(qty * unitCost, 2);
-            if (totalNetInput) {
-              totalNetInput.value = (qty > 0 && unitCost > 0) ? total.toFixed(2) : '0.00';
-            }
-          };
+    const updateTotalNet = () => {
+      const qty = parseInt(purQtyInput ? purQtyInput.value : 0) || 0;
+      const tp = parseFloat(tpInput ? tpInput.value : 0) || 0;
+      const dis = (discInput && discInput.value !== '' && !isNaN(parseFloat(discInput.value))) ? parseFloat(discInput.value) : 25;
+      const tax = (taxInput && taxInput.value !== '' && !isNaN(parseFloat(taxInput.value))) ? parseFloat(taxInput.value) : 0;
 
-          const updateTpAndCostFromMrp = () => {
-            const mrp = parseFloat(rpInput.value) || 0;
-            if (mrp > 0) {
-              const tp = Utils.round(mrp * 0.85, 2);
-              tpInput.value = tp.toFixed(2);
-              const dis = (discInput && discInput.value !== '' && !isNaN(parseFloat(discInput.value))) ? parseFloat(discInput.value) : 25;
-              const tax = (taxInput && taxInput.value !== '' && !isNaN(parseFloat(taxInput.value))) ? parseFloat(taxInput.value) : 0;
-              const cost = calculateUnitCost(tp, dis, tax);
-              costInput.value = Utils.round(cost, 2).toFixed(2);
-            } else if (!rpInput.value) {
-              tpInput.value = '';
-              costInput.value = '';
-            }
-            updateTotalNet();
-          };
+      const unitCost = calculateUnitCost(tp, dis);
+      const unitTax = (unitCost * tax) / 100;
+      const total = Utils.round(qty * (unitCost + unitTax), 2);
+      if (totalNetInput) {
+        totalNetInput.value = (qty > 0 && unitCost > 0) ? total.toFixed(2) : '0.00';
+      }
+    };
 
-          const updateCostFromTpAndDisc = () => {
-            const tp = parseFloat(tpInput.value) || 0;
-            const dis = (discInput && discInput.value !== '' && !isNaN(parseFloat(discInput.value))) ? parseFloat(discInput.value) : 25;
-            const tax = (taxInput && taxInput.value !== '' && !isNaN(parseFloat(taxInput.value))) ? parseFloat(taxInput.value) : 0;
-            if (tp > 0) {
-              const cost = calculateUnitCost(tp, dis, tax);
-              costInput.value = Utils.round(cost, 2).toFixed(2);
-            } else if (!tpInput.value) {
-              costInput.value = '';
-            }
-            updateTotalNet();
-          };
+    const updateTpAndCostFromMrp = () => {
+      const mrp = parseFloat(rpInput.value) || 0;
+      if (mrp > 0) {
+        const tp = Utils.round(mrp * 0.85, 2);
+        tpInput.value = tp.toFixed(2);
+        const dis = (discInput && discInput.value !== '' && !isNaN(parseFloat(discInput.value))) ? parseFloat(discInput.value) : 25;
+        const cost = calculateUnitCost(tp, dis);
+        costInput.value = Utils.round(cost, 2).toFixed(2);
+      } else if (!rpInput.value) {
+        tpInput.value = '';
+        costInput.value = '';
+      }
+      updateTotalNet();
+    };
 
-          const updateDiscFromCost = () => {
-            const tp = parseFloat(tpInput.value) || 0;
-            const cost = parseFloat(costInput.value) || 0;
-            const tax = (taxInput && taxInput.value !== '' && !isNaN(parseFloat(taxInput.value))) ? parseFloat(taxInput.value) : 0;
-            if (tp > 0 && cost >= 0) {
-              const advTaxAmount = (tp * tax) / 100;
-              const unitDiscount = (tp + advTaxAmount) - cost;
-              const dis = Utils.round((unitDiscount / tp) * 100, 2);
-              if (discInput) discInput.value = dis.toFixed(1);
-            }
-            updateTotalNet();
-          };
+    const updateCostFromTpAndDisc = () => {
+      const tp = parseFloat(tpInput.value) || 0;
+      const dis = (discInput && discInput.value !== '' && !isNaN(parseFloat(discInput.value))) ? parseFloat(discInput.value) : 25;
+      if (tp > 0) {
+        const cost = calculateUnitCost(tp, dis);
+        costInput.value = Utils.round(cost, 2).toFixed(2);
+      } else if (!tpInput.value) {
+        costInput.value = '';
+      }
+      updateTotalNet();
+    };
 
-          if (rpInput) rpInput.oninput = updateTpAndCostFromMrp;
-          if (tpInput) tpInput.oninput = updateCostFromTpAndDisc;
-          if (discInput) discInput.oninput = updateCostFromTpAndDisc;
-          if (taxInput) taxInput.oninput = updateCostFromTpAndDisc;
-          if (costInput) costInput.oninput = updateDiscFromCost;
-          if (purQtyInput) {
-            purQtyInput.oninput = updateTotalNet;
-            purQtyInput.onchange = updateTotalNet;
-          }
+    const updateDiscFromCost = () => {
+      const tp = parseFloat(tpInput.value) || 0;
+      const cost = parseFloat(costInput.value) || 0;
+      if (tp > 0 && cost >= 0) {
+        const unitDiscount = tp - cost;
+        const dis = Utils.round((unitDiscount / tp) * 100, 2);
+        if (discInput) discInput.value = dis.toFixed(1);
+      }
+      updateTotalNet();
+    };
 
-          updateTotalNet();
-        }
+    if (rpInput) rpInput.oninput = updateTpAndCostFromMrp;
+    if (tpInput) tpInput.oninput = updateCostFromTpAndDisc;
+    if (discInput) discInput.oninput = updateCostFromTpAndDisc;
+    if (taxInput) taxInput.oninput = updateTotalNet;
+    if (costInput) costInput.oninput = updateDiscFromCost;
+    if (purQtyInput) {
+      purQtyInput.oninput = updateTotalNet;
+      purQtyInput.onchange = updateTotalNet;
+    }
 
-        openAddModal() {
-          const titleElem = document.getElementById('prod-modal-title');
-          if (titleElem) titleElem.textContent = 'Add New Product & Purchase Invoicing';
-          
-          const form = document.getElementById('product-form');
-          if (form) form.reset();
-          
-          document.getElementById('prod-edit-id').value = '';
-          this.populateCompanyDropdown();
-          
-          const invDate = document.getElementById('pm-inv-date');
-          if (invDate) invDate.value = Utils.todayStr();
+    updateTotalNet();
+  }
 
-          const invRef = document.getElementById('pm-inv-ref');
-          if (invRef) invRef.value = '';
+  openAddModal() {
+    const titleElem = document.getElementById('prod-modal-title');
+    if (titleElem) titleElem.textContent = 'Add New Product & Purchase Invoicing';
 
-          const invPayType = document.getElementById('pm-inv-paytype');
-          if (invPayType) invPayType.value = 'Cash';
+    const form = document.getElementById('product-form');
+    if (form) form.reset();
 
-          this.stagedPurchaseItems = [];
+    document.getElementById('prod-edit-id').value = '';
+    this.populateCompanyDropdown();
 
-          document.getElementById('pm-item-no').value = 'MED-' + (1000 + storage.getProducts().length + 1);
-          
-          const discElem = document.getElementById('pm-discount-percent');
-          if (discElem) discElem.value = '25';
+    const invDate = document.getElementById('pm-inv-date');
+    if (invDate) invDate.value = Utils.todayStr();
 
-          const taxElem = document.getElementById('pm-advance-tax');
-          if (taxElem) taxElem.value = '0';
+    const invRef = document.getElementById('pm-inv-ref');
+    if (invRef) invRef.value = '';
 
-          const purQtyElem = document.getElementById('pm-purchased-qty');
-          if (purQtyElem) purQtyElem.value = '0';
+    const invPayType = document.getElementById('pm-inv-paytype');
+    if (invPayType) invPayType.value = 'Cash';
 
-          const totalNetElem = document.getElementById('pm-total-net');
-          if (totalNetElem) totalNetElem.value = '0.00';
+    this.stagedPurchaseItems = [];
 
-          const paidElem = document.getElementById('pm-pay-paid-amount');
-          if (paidElem) paidElem.value = '0';
+    document.getElementById('pm-item-no').value = 'MED-' + (1000 + storage.getProducts().length + 1);
 
-          // Mode visibility
-          const addActions = document.getElementById('pm-add-mode-actions');
-          const editActions = document.getElementById('pm-edit-mode-actions');
-          const stagedSection = document.getElementById('pm-staged-invoice-section');
-          const paymentSection = document.getElementById('pm-payment-settlement-section');
-          const addItemCol = document.getElementById('pm-add-item-col');
+    const discElem = document.getElementById('pm-discount-percent');
+    if (discElem) discElem.value = '25';
 
-          if (addActions) addActions.style.display = 'flex';
-          if (editActions) editActions.style.display = 'none';
-          if (stagedSection) stagedSection.style.display = 'block';
-          if (paymentSection) paymentSection.style.display = 'block';
-          if (addItemCol) addItemCol.style.display = 'block';
+    const taxElem = document.getElementById('pm-advance-tax');
+    if (taxElem) taxElem.value = '0';
 
-          this.renderStagedItemsTable();
-          this.calculatePaymentSettlement();
-          this.initPricingCalculator();
-          app.openModal('product-modal');
-        }
+    const purQtyElem = document.getElementById('pm-purchased-qty');
+    if (purQtyElem) purQtyElem.value = '0';
 
-        openEditModal(id) {
-          const p = storage.getProducts().find(prod => prod.id === id);
-          if (!p) return;
-          
-          const titleElem = document.getElementById('prod-modal-title');
-          if (titleElem) titleElem.textContent = 'Edit Product Details';
-          
-          document.getElementById('prod-edit-id').value = p.id;
-          document.getElementById('pm-item-no').value = p.itemNo;
-          document.getElementById('pm-name').value = p.name;
-          document.getElementById('pm-generic').value = p.genericName || '';
-          this.populateCompanyDropdown(p.company || '');
-          document.getElementById('pm-category').value = p.category || 'Medicines';
-          document.getElementById('pm-batch').value = p.batchNumber || '';
-          document.getElementById('pm-expiry').value = p.expiryDate || '';
-          
-          const tpVal = parseFloat(p.tradePrice !== undefined ? p.tradePrice : (p.tp || 0)) || 0;
-          const retVal = parseFloat(p.retailPrice !== undefined ? p.retailPrice : (tpVal ? (tpVal / 0.85) : (p.salePrice || 0))) || 0;
-          const costVal = parseFloat(p.purchaseCost !== undefined ? p.purchaseCost : (p.purchasePrice || p.costPrice || (tpVal ? (tpVal * 0.75) : 0))) || 0;
-          const disVal = p.discount !== undefined ? parseFloat(p.discount) : (tpVal > 0 ? Utils.round(((tpVal - costVal) / tpVal) * 100, 2) : 25);
-          const taxVal = p.advanceTax !== undefined ? parseFloat(p.advanceTax) : 0;
+    const bonusElem = document.getElementById('pm-bonus-qty');
+    if (bonusElem) bonusElem.value = '0';
 
-          const rpElem = document.getElementById('pm-retail-price');
-          if (rpElem) rpElem.value = retVal > 0 ? retVal.toFixed(2) : '';
+    const totalNetElem = document.getElementById('pm-total-net');
+    if (totalNetElem) totalNetElem.value = '0.00';
 
-          const tpElem = document.getElementById('pm-tp');
-          if (tpElem) tpElem.value = tpVal > 0 ? tpVal.toFixed(2) : '';
+    const paidElem = document.getElementById('pm-pay-paid-amount');
+    if (paidElem) paidElem.value = '0';
 
-          const discElem = document.getElementById('pm-discount-percent');
-          if (discElem) discElem.value = !isNaN(disVal) ? disVal : 25;
+    // Mode visibility
+    const addActions = document.getElementById('pm-add-mode-actions');
+    const editActions = document.getElementById('pm-edit-mode-actions');
+    const stagedSection = document.getElementById('pm-staged-invoice-section');
+    const paymentSection = document.getElementById('pm-payment-settlement-section');
+    const addItemCol = document.getElementById('pm-add-item-col');
 
-          const taxElem = document.getElementById('pm-advance-tax');
-          if (taxElem) taxElem.value = !isNaN(taxVal) ? taxVal : 0;
+    if (addActions) addActions.style.display = 'flex';
+    if (editActions) editActions.style.display = 'none';
+    if (stagedSection) stagedSection.style.display = 'block';
+    if (paymentSection) paymentSection.style.display = 'block';
+    if (addItemCol) addItemCol.style.display = 'block';
 
-          const costElem = document.getElementById('pm-purchase-cost');
-          if (costElem) costElem.value = costVal > 0 ? costVal.toFixed(2) : '';
+    this.renderStagedItemsTable();
+    this.calculatePaymentSettlement();
+    this.initPricingCalculator();
+    app.openModal('product-modal');
+  }
 
-          document.getElementById('pm-purchased-qty').value = p.purchasedQty || p.availableQty || 0;
-          document.getElementById('pm-rack').value = p.rackNumber || '';
+  openEditModal(id) {
+    const p = storage.getProducts().find(prod => prod.id === id);
+    if (!p) return;
 
-          // Mode visibility
-          const addActions = document.getElementById('pm-add-mode-actions');
-          const editActions = document.getElementById('pm-edit-mode-actions');
-          const stagedSection = document.getElementById('pm-staged-invoice-section');
-          const paymentSection = document.getElementById('pm-payment-settlement-section');
-          const addItemCol = document.getElementById('pm-add-item-col');
+    const titleElem = document.getElementById('prod-modal-title');
+    if (titleElem) titleElem.textContent = 'Edit Product Details';
 
-          if (addActions) addActions.style.display = 'none';
-          if (editActions) editActions.style.display = 'flex';
-          if (stagedSection) stagedSection.style.display = 'none';
-          if (paymentSection) paymentSection.style.display = 'none';
-          if (addItemCol) addItemCol.style.display = 'none';
+    document.getElementById('prod-edit-id').value = p.id;
+    document.getElementById('pm-item-no').value = p.itemNo;
+    document.getElementById('pm-name').value = p.name;
+    document.getElementById('pm-generic').value = p.genericName || '';
+    this.populateCompanyDropdown(p.company || '');
+    document.getElementById('pm-category').value = p.category || 'Medicines';
+    document.getElementById('pm-batch').value = p.batchNumber || '';
+    document.getElementById('pm-expiry').value = p.expiryDate || '';
 
-          this.initPricingCalculator();
-          app.openModal('product-modal');
-        }
+    const tpVal = parseFloat(p.tradePrice !== undefined ? p.tradePrice : (p.tp || 0)) || 0;
+    const retVal = parseFloat(p.retailPrice !== undefined ? p.retailPrice : (tpVal ? (tpVal / 0.85) : (p.salePrice || 0))) || 0;
+    const costVal = parseFloat(p.purchaseCost !== undefined ? p.purchaseCost : (p.purchasePrice || p.costPrice || (tpVal ? (tpVal * 0.75) : 0))) || 0;
+    const disVal = p.discount !== undefined ? parseFloat(p.discount) : (tpVal > 0 ? Utils.round(((tpVal - costVal) / tpVal) * 100, 2) : 25);
+    const taxVal = p.advanceTax !== undefined ? parseFloat(p.advanceTax) : 0;
 
-        stageCurrentItem() {
-          const itemNoElem = document.getElementById('pm-item-no');
-          const nameElem = document.getElementById('pm-name');
-          const itemNo = (itemNoElem ? itemNoElem.value : '').trim();
-          const name = (nameElem ? nameElem.value : '').trim();
+    const rpElem = document.getElementById('pm-retail-price');
+    if (rpElem) rpElem.value = retVal > 0 ? retVal.toFixed(2) : '';
 
-          if (!itemNo || !name) {
-            app.showToast('Please enter both Item Code and Product Name.', 'warning');
-            if (!itemNo && itemNoElem) itemNoElem.focus();
-            else if (nameElem) nameElem.focus();
-            return;
-          }
+    const tpElem = document.getElementById('pm-tp');
+    if (tpElem) tpElem.value = tpVal > 0 ? tpVal.toFixed(2) : '';
 
-          const qty = parseInt(document.getElementById('pm-purchased-qty')?.value) || 0;
-          if (qty <= 0) {
-            app.showToast('Please enter a Purchased Qty greater than 0.', 'warning');
-            document.getElementById('pm-purchased-qty')?.focus();
-            return;
-          }
+    const discElem = document.getElementById('pm-discount-percent');
+    if (discElem) discElem.value = !isNaN(disVal) ? disVal : 25;
 
-          const retailPriceVal = parseFloat(document.getElementById('pm-retail-price')?.value) || 0;
-          const tpVal = parseFloat(document.getElementById('pm-tp')?.value) || (retailPriceVal ? Utils.round(retailPriceVal * 0.85, 2) : 0);
-          
-          if (tpVal <= 0) {
-            app.showToast('Please enter Trade Price (TP) or Retail Price (MRP).', 'warning');
-            document.getElementById('pm-tp')?.focus();
-            return;
-          }
+    const taxElem = document.getElementById('pm-advance-tax');
+    if (taxElem) taxElem.value = !isNaN(taxVal) ? taxVal : 0;
 
-          const discVal = parseFloat(document.getElementById('pm-discount-percent')?.value) || 0;
-          const advTaxVal = parseFloat(document.getElementById('pm-advance-tax')?.value) || 0;
+    const costElem = document.getElementById('pm-purchase-cost');
+    if (costElem) costElem.value = costVal > 0 ? costVal.toFixed(2) : '';
 
-          const unitDiscount = (tpVal * discVal) / 100;
-          const advTaxAmount = (tpVal * advTaxVal) / 100;
-          const unroundedUnitCost = (tpVal - unitDiscount) + advTaxAmount;
-          const manualCost = parseFloat(document.getElementById('pm-purchase-cost')?.value);
-          const finalUnitCost = !isNaN(manualCost) && manualCost > 0 ? manualCost : unroundedUnitCost;
-          const lineNet = Utils.round(qty * finalUnitCost, 2);
+    document.getElementById('pm-purchased-qty').value = p.purchasedQty || p.availableQty || 0;
+    const editBonusElem = document.getElementById('pm-bonus-qty');
+    if (editBonusElem) editBonusElem.value = p.bonusQty || p.bonus || 0;
+    document.getElementById('pm-rack').value = p.rackNumber || '';
 
-          const stagedItem = {
-            id: Utils.uid('STG'),
-            itemNo: itemNo,
-            name: name,
-            genericName: document.getElementById('pm-generic')?.value || '',
-            company: document.getElementById('pm-company')?.value || '',
-            category: document.getElementById('pm-category')?.value || 'Medicines',
-            batchNumber: document.getElementById('pm-batch')?.value || '-',
-            expiryDate: document.getElementById('pm-expiry')?.value || '-',
-            rackNumber: document.getElementById('pm-rack')?.value || '',
-            retailPrice: retailPriceVal,
-            tradePrice: tpVal,
-            tp: tpVal,
-            quantity: qty,
-            purchasedQty: qty,
-            availableQty: qty,
-            minStockLevel: 10,
-            discountPercent: discVal,
-            advanceTaxPercent: advTaxVal,
-            unitDiscount: Utils.round(unitDiscount, 4),
-            unitTax: Utils.round(advTaxAmount, 4),
-            unitCost: Utils.round(finalUnitCost, 2),
-            unroundedUnitCost: finalUnitCost,
-            gross: Utils.round(qty * tpVal, 2),
-            discountAmount: Utils.round(qty * unitDiscount, 2),
-            taxAmount: Utils.round(qty * advTaxAmount, 2),
-            lineNet: lineNet
-          };
+    // Mode visibility
+    const addActions = document.getElementById('pm-add-mode-actions');
+    const editActions = document.getElementById('pm-edit-mode-actions');
+    const stagedSection = document.getElementById('pm-staged-invoice-section');
+    const paymentSection = document.getElementById('pm-payment-settlement-section');
+    const addItemCol = document.getElementById('pm-add-item-col');
 
-          if (!this.stagedPurchaseItems) this.stagedPurchaseItems = [];
-          this.stagedPurchaseItems.push(stagedItem);
+    if (addActions) addActions.style.display = 'none';
+    if (editActions) editActions.style.display = 'flex';
+    if (stagedSection) stagedSection.style.display = 'none';
+    if (paymentSection) paymentSection.style.display = 'none';
+    if (addItemCol) addItemCol.style.display = 'none';
 
-          app.showToast(`Added "${stagedItem.name}" to invoice!`, 'success');
+    this.initPricingCalculator();
+    app.openModal('product-modal');
+  }
 
-          // Reset line fields for next item
-          document.getElementById('pm-name').value = '';
-          document.getElementById('pm-generic').value = '';
-          document.getElementById('pm-batch').value = '';
-          document.getElementById('pm-expiry').value = '';
-          document.getElementById('pm-retail-price').value = '';
-          document.getElementById('pm-tp').value = '';
-          document.getElementById('pm-purchased-qty').value = '0';
-          document.getElementById('pm-discount-percent').value = '25';
-          document.getElementById('pm-advance-tax').value = '0';
-          document.getElementById('pm-purchase-cost').value = '';
-          document.getElementById('pm-total-net').value = '0.00';
-          document.getElementById('pm-rack').value = '';
+  stageCurrentItem() {
+    const itemNoElem = document.getElementById('pm-item-no');
+    const nameElem = document.getElementById('pm-name');
+    const itemNo = (itemNoElem ? itemNoElem.value : '').trim();
+    const name = (nameElem ? nameElem.value : '').trim();
 
-          // Generate next item code
-          const nextSeq = 1000 + storage.getProducts().length + this.stagedPurchaseItems.length + 1;
-          document.getElementById('pm-item-no').value = 'MED-' + nextSeq;
+    if (!itemNo || !name) {
+      app.showToast('Please enter both Item Code and Product Name.', 'warning');
+      if (!itemNo && itemNoElem) itemNoElem.focus();
+      else if (nameElem) nameElem.focus();
+      return;
+    }
 
-          this.renderStagedItemsTable();
-          this.calculatePaymentSettlement();
-          this.initPricingCalculator();
+    const qty = parseInt(document.getElementById('pm-purchased-qty')?.value) || 0;
+    const bonusQty = parseInt(document.getElementById('pm-bonus-qty')?.value) || 0;
+    if (qty <= 0) {
+      app.showToast('Please enter a Purchased Qty greater than 0.', 'warning');
+      document.getElementById('pm-purchased-qty')?.focus();
+      return;
+    }
 
-          setTimeout(() => {
-            const nInput = document.getElementById('pm-name');
-            if (nInput) nInput.focus();
-          }, 50);
-        }
+    const retailPriceVal = parseFloat(document.getElementById('pm-retail-price')?.value) || 0;
+    const tpVal = parseFloat(document.getElementById('pm-tp')?.value) || (retailPriceVal ? Utils.round(retailPriceVal * 0.85, 2) : 0);
 
-        removeStagedItem(index) {
-          if (!this.stagedPurchaseItems) return;
-          this.stagedPurchaseItems.splice(index, 1);
-          this.renderStagedItemsTable();
-          this.calculatePaymentSettlement();
-          app.showToast('Line item removed.', 'info');
-        }
+    if (tpVal <= 0) {
+      app.showToast('Please enter Trade Price (TP) or Retail Price (MRP).', 'warning');
+      document.getElementById('pm-tp')?.focus();
+      return;
+    }
 
-        clearStagedItems() {
-          if (!this.stagedPurchaseItems || !this.stagedPurchaseItems.length) return;
-          this.stagedPurchaseItems = [];
-          this.renderStagedItemsTable();
-          this.calculatePaymentSettlement();
-          app.showToast('Invoice line items cleared.', 'info');
-        }
+    const discVal = parseFloat(document.getElementById('pm-discount-percent')?.value) || 0;
+    const advTaxVal = parseFloat(document.getElementById('pm-advance-tax')?.value) || 0;
 
-        renderStagedItemsTable() {
-          const tbody = document.getElementById('pm-staged-table-body');
-          if (!tbody) return;
+    const unitDiscount = (tpVal * discVal) / 100;
+    const unroundedUnitCost = tpVal - unitDiscount;
+    const advTaxAmount = (unroundedUnitCost * advTaxVal) / 100;
+    const manualCost = parseFloat(document.getElementById('pm-purchase-cost')?.value);
+    const finalUnitCost = !isNaN(manualCost) && manualCost > 0 ? manualCost : unroundedUnitCost;
+    const lineNet = Utils.round(qty * (finalUnitCost + advTaxAmount), 2);
 
-          const items = this.stagedPurchaseItems || [];
-          const badge = document.getElementById('pm-staged-count-badge');
-          if (badge) badge.textContent = `${items.length} Item${items.length === 1 ? '' : 's'}`;
+    const stagedItem = {
+      id: Utils.uid('STG'),
+      itemNo: itemNo,
+      name: name,
+      genericName: document.getElementById('pm-generic')?.value || '',
+      company: document.getElementById('pm-company')?.value || '',
+      category: document.getElementById('pm-category')?.value || 'Medicines',
+      batchNumber: document.getElementById('pm-batch')?.value || '-',
+      expiryDate: document.getElementById('pm-expiry')?.value || '-',
+      rackNumber: document.getElementById('pm-rack')?.value || '',
+      retailPrice: retailPriceVal,
+      tradePrice: tpVal,
+      tp: tpVal,
+      quantity: qty,
+      bonus: bonusQty,
+      bonusQty: bonusQty,
+      purchasedQty: qty,
+      availableQty: qty,
+      minStockLevel: 10,
+      discountPercent: discVal,
+      advanceTaxPercent: advTaxVal,
+      unitDiscount: Utils.round(unitDiscount, 4),
+      unitTax: Utils.round(advTaxAmount, 4),
+      unitCost: Utils.round(finalUnitCost, 2),
+      unroundedUnitCost: finalUnitCost,
+      gross: Utils.round(qty * tpVal, 2),
+      discountAmount: Utils.round(qty * unitDiscount, 2),
+      taxAmount: Utils.round(qty * advTaxAmount, 2),
+      lineNet: lineNet
+    };
 
-          let totalQty = 0;
-          let totalGross = 0;
-          let totalDiscount = 0;
-          let totalTax = 0;
-          let grandTotal = 0;
+    if (!this.stagedPurchaseItems) this.stagedPurchaseItems = [];
+    this.stagedPurchaseItems.push(stagedItem);
 
-          if (!items.length) {
-            tbody.innerHTML = `
+    app.showToast(`Added "${stagedItem.name}" to invoice!`, 'success');
+
+    // Reset line fields for next item
+    document.getElementById('pm-name').value = '';
+    document.getElementById('pm-generic').value = '';
+    document.getElementById('pm-batch').value = '';
+    document.getElementById('pm-expiry').value = '';
+    document.getElementById('pm-retail-price').value = '';
+    document.getElementById('pm-tp').value = '';
+    document.getElementById('pm-purchased-qty').value = '0';
+    const bonusResetElem = document.getElementById('pm-bonus-qty');
+    if (bonusResetElem) bonusResetElem.value = '0';
+    document.getElementById('pm-discount-percent').value = '25';
+    document.getElementById('pm-advance-tax').value = '0';
+    document.getElementById('pm-purchase-cost').value = '';
+    document.getElementById('pm-total-net').value = '0.00';
+    document.getElementById('pm-rack').value = '';
+
+    // Generate next item code
+    const nextSeq = 1000 + storage.getProducts().length + this.stagedPurchaseItems.length + 1;
+    document.getElementById('pm-item-no').value = 'MED-' + nextSeq;
+
+    this.renderStagedItemsTable();
+    this.calculatePaymentSettlement();
+    this.initPricingCalculator();
+
+    setTimeout(() => {
+      const nInput = document.getElementById('pm-name');
+      if (nInput) nInput.focus();
+    }, 50);
+  }
+
+  removeStagedItem(index) {
+    if (!this.stagedPurchaseItems) return;
+    this.stagedPurchaseItems.splice(index, 1);
+    this.renderStagedItemsTable();
+    this.calculatePaymentSettlement();
+    app.showToast('Line item removed.', 'info');
+  }
+
+  clearStagedItems() {
+    if (!this.stagedPurchaseItems || !this.stagedPurchaseItems.length) return;
+    this.stagedPurchaseItems = [];
+    this.renderStagedItemsTable();
+    this.calculatePaymentSettlement();
+    app.showToast('Invoice line items cleared.', 'info');
+  }
+
+  renderStagedItemsTable() {
+    const tbody = document.getElementById('pm-staged-table-body');
+    if (!tbody) return;
+
+    const items = this.stagedPurchaseItems || [];
+    const badge = document.getElementById('pm-staged-count-badge');
+    if (badge) badge.textContent = `${items.length} Item${items.length === 1 ? '' : 's'}`;
+
+    let totalQty = 0;
+    let totalGross = 0;
+    let totalDiscount = 0;
+    let totalTax = 0;
+    let grandTotal = 0;
+
+    if (!items.length) {
+      tbody.innerHTML = `
               <tr>
-                <td colspan="13" style="text-align: center; color: #94a3b8; padding: 20px; font-weight: 500;">
+                <td colspan="14" style="text-align: center; color: #94a3b8; padding: 20px; font-weight: 500;">
                   <i class="fa-solid fa-cart-arrow-down" style="font-size: 1.2rem; margin-bottom: 6px; display: block; color: #cbd5e1;"></i>
                   No line items staged. Fill product specifications above and click <strong>+ Add Item</strong>.
                 </td>
               </tr>
             `;
-          } else {
-            let html = '';
-            items.forEach((item, idx) => {
-              totalQty += item.quantity;
-              totalGross += item.gross;
-              totalDiscount += item.discountAmount;
-              totalTax += item.taxAmount;
-              grandTotal += item.lineNet;
+    } else {
+      let html = '';
+      items.forEach((item, idx) => {
+        totalQty += item.quantity;
+        totalGross += item.gross;
+        totalDiscount += item.discountAmount;
+        totalTax += item.taxAmount;
+        grandTotal += item.lineNet;
 
-              html += `
+        html += `
                 <tr style="border-bottom: 1px solid #e2e8f0; font-size: 0.76rem;">
                   <td style="padding: 5px 6px; text-align: center; color: #64748b; font-weight: 600;">${idx + 1}</td>
                   <td style="padding: 5px 6px; font-weight: 700; color: #0284c7; white-space: nowrap;">${item.itemNo}</td>
@@ -446,6 +448,7 @@ class ProductsModule {
                   <td style="padding: 5px 6px; text-align: right; color: #059669; font-weight: 600; white-space: nowrap;">${item.retailPrice > 0 ? item.retailPrice.toFixed(2) : '-'}</td>
                   <td style="padding: 5px 6px; text-align: right; font-weight: 600; white-space: nowrap;">${item.tp.toFixed(2)}</td>
                   <td style="padding: 5px 6px; text-align: center; font-weight: 800; color: #0284c7;">${item.quantity}</td>
+                  <td style="padding: 5px 6px; text-align: center; font-weight: 800; color: #8b5cf6;">${item.bonus || 0}</td>
                   <td style="padding: 5px 6px; text-align: center; color: #d97706; font-weight: 700;">${item.discountPercent > 0 ? item.discountPercent + '%' : '-'}</td>
                   <td style="padding: 5px 6px; text-align: center; color: #6366f1; font-weight: 700;">${item.advanceTaxPercent > 0 ? item.advanceTaxPercent + '%' : '0%'}</td>
                   <td style="padding: 5px 6px; text-align: right; font-weight: 700; color: #0f172a; white-space: nowrap;">${item.unitCost.toFixed(2)}</td>
@@ -457,330 +460,331 @@ class ProductsModule {
                   </td>
                 </tr>
               `;
-            });
-            tbody.innerHTML = html;
-          }
+      });
+      tbody.innerHTML = html;
+    }
 
-          const qElem = document.getElementById('pm-summary-total-qty');
-          const gElem = document.getElementById('pm-summary-gross');
-          const dElem = document.getElementById('pm-summary-discount');
-          const tElem = document.getElementById('pm-summary-tax');
-          const gtElem = document.getElementById('pm-summary-grand-total');
+    const qElem = document.getElementById('pm-summary-total-qty');
+    const gElem = document.getElementById('pm-summary-gross');
+    const dElem = document.getElementById('pm-summary-discount');
+    const tElem = document.getElementById('pm-summary-tax');
+    const gtElem = document.getElementById('pm-summary-grand-total');
 
-          if (qElem) qElem.textContent = String(totalQty);
-          if (gElem) gElem.textContent = 'Rs. ' + totalGross.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-          if (dElem) dElem.textContent = 'Rs. ' + totalDiscount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-          if (tElem) tElem.textContent = 'Rs. ' + totalTax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-          if (gtElem) gtElem.textContent = 'Rs. ' + grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
+    if (qElem) qElem.textContent = String(totalQty);
+    if (gElem) gElem.textContent = 'Rs. ' + totalGross.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (dElem) dElem.textContent = 'Rs. ' + totalDiscount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (tElem) tElem.textContent = 'Rs. ' + totalTax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (gtElem) gtElem.textContent = 'Rs. ' + grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
 
-        calculatePaymentSettlement() {
-          const items = this.stagedPurchaseItems || [];
-          let grandTotal = 0;
-          items.forEach(item => { grandTotal += item.lineNet; });
-          grandTotal = Utils.round(grandTotal, 2);
+  calculatePaymentSettlement() {
+    const items = this.stagedPurchaseItems || [];
+    let grandTotal = 0;
+    items.forEach(item => { grandTotal += item.lineNet; });
+    grandTotal = Utils.round(grandTotal, 2);
 
-          const paidInput = document.getElementById('pm-pay-paid-amount');
-          const paidAmount = parseFloat(paidInput ? paidInput.value : 0) || 0;
-          const remaining = Math.max(0, Utils.round(grandTotal - paidAmount, 2));
+    const paidInput = document.getElementById('pm-pay-paid-amount');
+    const paidAmount = parseFloat(paidInput ? paidInput.value : 0) || 0;
+    const remaining = Math.max(0, Utils.round(grandTotal - paidAmount, 2));
 
-          const grandTotalDisplay = document.getElementById('pm-pay-grand-total');
-          if (grandTotalDisplay) {
-            grandTotalDisplay.textContent = 'Rs. ' + grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-          }
+    const grandTotalDisplay = document.getElementById('pm-pay-grand-total');
+    if (grandTotalDisplay) {
+      grandTotalDisplay.textContent = 'Rs. ' + grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
 
-          const remainingDisplay = document.getElementById('pm-pay-remaining-balance');
-          if (remainingDisplay) {
-            remainingDisplay.textContent = 'Rs. ' + remaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-          }
+    const remainingDisplay = document.getElementById('pm-pay-remaining-balance');
+    if (remainingDisplay) {
+      remainingDisplay.textContent = 'Rs. ' + remaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
 
-          const card = document.getElementById('pm-pay-remaining-card');
-          const badge = document.getElementById('pm-pay-status-badge');
+    const card = document.getElementById('pm-pay-remaining-card');
+    const badge = document.getElementById('pm-pay-status-badge');
 
-          if (grandTotal > 0 && remaining <= 0) {
-            // Fully Paid
-            if (card) { card.style.background = '#ecfdf5'; card.style.borderColor = '#a7f3d0'; }
-            if (remainingDisplay) { remainingDisplay.style.color = '#059669'; }
-            if (badge) {
-              badge.textContent = 'Fully Paid';
-              badge.style.background = '#10b981';
-              badge.style.color = '#ffffff';
-            }
-          } else if (paidAmount > 0 && remaining > 0) {
-            // Partially Paid
-            if (card) { card.style.background = '#fffbeb'; card.style.borderColor = '#fde68a'; }
-            if (remainingDisplay) { remainingDisplay.style.color = '#d97706'; }
-            if (badge) {
-              badge.textContent = 'Partially Paid';
-              badge.style.background = '#f59e0b';
-              badge.style.color = '#ffffff';
-            }
-          } else {
-            // Unpaid / Credit
-            if (card) { card.style.background = '#fef2f2'; card.style.borderColor = '#fecaca'; }
-            if (remainingDisplay) { remainingDisplay.style.color = '#ef4444'; }
-            if (badge) {
-              badge.textContent = 'Unpaid / Credit';
-              badge.style.background = '#ef4444';
-              badge.style.color = '#ffffff';
-            }
-          }
-        }
+    if (grandTotal > 0 && remaining <= 0) {
+      // Fully Paid
+      if (card) { card.style.background = '#ecfdf5'; card.style.borderColor = '#a7f3d0'; }
+      if (remainingDisplay) { remainingDisplay.style.color = '#059669'; }
+      if (badge) {
+        badge.textContent = 'Fully Paid';
+        badge.style.background = '#10b981';
+        badge.style.color = '#ffffff';
+      }
+    } else if (paidAmount > 0 && remaining > 0) {
+      // Partially Paid
+      if (card) { card.style.background = '#fffbeb'; card.style.borderColor = '#fde68a'; }
+      if (remainingDisplay) { remainingDisplay.style.color = '#d97706'; }
+      if (badge) {
+        badge.textContent = 'Partially Paid';
+        badge.style.background = '#f59e0b';
+        badge.style.color = '#ffffff';
+      }
+    } else {
+      // Unpaid / Credit
+      if (card) { card.style.background = '#fef2f2'; card.style.borderColor = '#fecaca'; }
+      if (remainingDisplay) { remainingDisplay.style.color = '#ef4444'; }
+      if (badge) {
+        badge.textContent = 'Unpaid / Credit';
+        badge.style.background = '#ef4444';
+        badge.style.color = '#ffffff';
+      }
+    }
+  }
 
-        setPaymentFull() {
-          const items = this.stagedPurchaseItems || [];
-          let grandTotal = 0;
-          items.forEach(item => { grandTotal += item.lineNet; });
-          grandTotal = Utils.round(grandTotal, 2);
+  setPaymentFull() {
+    const items = this.stagedPurchaseItems || [];
+    let grandTotal = 0;
+    items.forEach(item => { grandTotal += item.lineNet; });
+    grandTotal = Utils.round(grandTotal, 2);
 
-          const paidInput = document.getElementById('pm-pay-paid-amount');
-          if (paidInput) paidInput.value = grandTotal.toFixed(2);
+    const paidInput = document.getElementById('pm-pay-paid-amount');
+    if (paidInput) paidInput.value = grandTotal.toFixed(2);
 
-          const payType = document.getElementById('pm-inv-paytype');
-          if (payType) payType.value = 'Cash';
+    const payType = document.getElementById('pm-inv-paytype');
+    if (payType) payType.value = 'Cash';
 
-          this.calculatePaymentSettlement();
-        }
+    this.calculatePaymentSettlement();
+  }
 
-        setPaymentUnpaid() {
-          const paidInput = document.getElementById('pm-pay-paid-amount');
-          if (paidInput) paidInput.value = '0';
+  setPaymentUnpaid() {
+    const paidInput = document.getElementById('pm-pay-paid-amount');
+    if (paidInput) paidInput.value = '0';
 
-          const payType = document.getElementById('pm-inv-paytype');
-          if (payType) payType.value = 'Credit / Payable';
+    const payType = document.getElementById('pm-inv-paytype');
+    if (payType) payType.value = 'Credit / Payable';
 
-          this.calculatePaymentSettlement();
-        }
+    this.calculatePaymentSettlement();
+  }
 
-        savePurchaseInvoice(andPrint = false) {
-          // If no staged items, check if current active input has an item to stage automatically
-          if (!this.stagedPurchaseItems || this.stagedPurchaseItems.length === 0) {
-            const name = (document.getElementById('pm-name')?.value || '').trim();
-            const tp = parseFloat(document.getElementById('pm-tp')?.value) || 0;
-            const qty = parseInt(document.getElementById('pm-purchased-qty')?.value) || 0;
-            
-            if (name && tp > 0 && qty > 0) {
-              this.stageCurrentItem();
-            } else {
-              app.showToast('Please add at least one line item to the purchase invoice.', 'warning');
-              return;
-            }
-          }
+  savePurchaseInvoice(andPrint = false) {
+    // If no staged items, check if current active input has an item to stage automatically
+    if (!this.stagedPurchaseItems || this.stagedPurchaseItems.length === 0) {
+      const name = (document.getElementById('pm-name')?.value || '').trim();
+      const tp = parseFloat(document.getElementById('pm-tp')?.value) || 0;
+      const qty = parseInt(document.getElementById('pm-purchased-qty')?.value) || 0;
 
-          const items = this.stagedPurchaseItems;
-          if (!items || !items.length) {
-            app.showToast('Purchase invoice is empty.', 'warning');
-            return;
-          }
+      if (name && tp > 0 && qty > 0) {
+        this.stageCurrentItem();
+      } else {
+        app.showToast('Please add at least one line item to the purchase invoice.', 'warning');
+        return;
+      }
+    }
 
-          const companySelect = document.getElementById('pm-company');
-          const companyName = companySelect ? companySelect.value : '';
-          const companies = storage.getCompanies();
-          const comp = companies.find(c => c.name === companyName) || null;
+    const items = this.stagedPurchaseItems;
+    if (!items || !items.length) {
+      app.showToast('Purchase invoice is empty.', 'warning');
+      return;
+    }
 
-          const invRef = (document.getElementById('pm-inv-ref')?.value || '').trim();
-          const invDate = document.getElementById('pm-inv-date')?.value || Utils.todayStr();
-          const payType = document.getElementById('pm-inv-paytype')?.value || 'Cash';
+    const companySelect = document.getElementById('pm-company');
+    const companyName = companySelect ? companySelect.value : '';
+    const companies = storage.getCompanies();
+    const comp = companies.find(c => c.name === companyName) || null;
 
-          let totalGross = 0;
-          let totalDiscount = 0;
-          let totalTax = 0;
-          let grandTotal = 0;
+    const invRef = (document.getElementById('pm-inv-ref')?.value || '').trim();
+    const invDate = document.getElementById('pm-inv-date')?.value || Utils.todayStr();
+    const payType = document.getElementById('pm-inv-paytype')?.value || 'Cash';
 
-          // 1. Process & Update Inventory Products
-          const existingProducts = storage.getProducts();
+    let totalGross = 0;
+    let totalDiscount = 0;
+    let totalTax = 0;
+    let grandTotal = 0;
 
-          items.forEach(staged => {
-            totalGross += staged.gross;
-            totalDiscount += staged.discountAmount;
-            totalTax += staged.taxAmount;
-            grandTotal += staged.lineNet;
+    // 1. Process & Update Inventory Products
+    const existingProducts = storage.getProducts();
 
-            const prodData = {
-              itemNo: staged.itemNo,
-              name: staged.name,
-              genericName: staged.genericName,
-              company: staged.company || companyName,
-              category: staged.category,
-              batchNumber: staged.batchNumber,
-              expiryDate: staged.expiryDate,
-              tp: staged.tradePrice,
-              tradePrice: staged.tradePrice,
-              salePrice: staged.tradePrice,
-              retailPrice: staged.retailPrice,
-              discount: staged.discountPercent,
-              purchaseDiscount: staged.discountPercent,
-              advanceTax: staged.advanceTaxPercent,
-              purchaseCost: staged.unitCost,
-              purchasePrice: staged.unitCost,
-              costPrice: staged.unitCost,
-              purchasedQty: 0,
-              availableQty: 0,
-              minStockLevel: staged.minStockLevel || 10,
-              rackNumber: staged.rackNumber
-            };
+    items.forEach(staged => {
+      totalGross += staged.gross;
+      totalDiscount += staged.discountAmount;
+      totalTax += staged.taxAmount;
+      grandTotal += staged.lineNet;
 
-            const matchIdx = existingProducts.findIndex(p => p.itemNo === staged.itemNo || p.name.toLowerCase() === staged.name.toLowerCase());
-            if (matchIdx !== -1) {
-              const p = existingProducts[matchIdx];
-              p.batchNumber = staged.batchNumber || p.batchNumber;
-              p.expiryDate = staged.expiryDate || p.expiryDate;
-              p.tp = staged.tradePrice;
-              p.tradePrice = staged.tradePrice;
-              p.retailPrice = staged.retailPrice || p.retailPrice;
-              p.discount = staged.discountPercent;
-              p.advanceTax = staged.advanceTaxPercent;
-              p.purchaseCost = staged.unitCost;
-              p.salePrice = staged.tradePrice;
-              storage.updateProduct(p.id, p);
-              staged.productId = p.id;
-            } else {
-              const created = storage.addProduct(prodData);
-              if (created) staged.productId = created.id;
-            }
-          });
+      const prodData = {
+        itemNo: staged.itemNo,
+        name: staged.name,
+        genericName: staged.genericName,
+        company: staged.company || companyName,
+        category: staged.category,
+        batchNumber: staged.batchNumber,
+        expiryDate: staged.expiryDate,
+        tp: staged.tradePrice,
+        tradePrice: staged.tradePrice,
+        salePrice: staged.tradePrice,
+        retailPrice: staged.retailPrice,
+        discount: staged.discountPercent,
+        purchaseDiscount: staged.discountPercent,
+        advanceTax: staged.advanceTaxPercent,
+        purchaseCost: staged.unitCost,
+        purchasePrice: staged.unitCost,
+        costPrice: staged.unitCost,
+        purchasedQty: 0,
+        availableQty: 0,
+        minStockLevel: staged.minStockLevel || 10,
+        rackNumber: staged.rackNumber
+      };
 
-          // 2. Format Line Items for Unified Purchase Invoice Record
-          const formattedItems = items.map(staged => ({
-            productId: staged.productId || '',
-            itemNo: staged.itemNo,
-            code: staged.itemNo,
-            name: staged.name,
-            batchNumber: staged.batchNumber,
-            expiryDate: staged.expiryDate,
-            quantity: staged.quantity,
-            bonus: 0,
-            price: staged.tradePrice,
-            tp: staged.tradePrice,
-            retailPrice: staged.retailPrice,
-            discountPercent: staged.discountPercent,
-            taxPercent: staged.advanceTaxPercent,
-            purchaseCost: staged.unitCost,
-            totalAmount: staged.lineNet
-          }));
+      const matchIdx = existingProducts.findIndex(p => p.itemNo === staged.itemNo || p.name.toLowerCase() === staged.name.toLowerCase());
+      if (matchIdx !== -1) {
+        const p = existingProducts[matchIdx];
+        p.batchNumber = staged.batchNumber || p.batchNumber;
+        p.expiryDate = staged.expiryDate || p.expiryDate;
+        p.tp = staged.tradePrice;
+        p.tradePrice = staged.tradePrice;
+        p.retailPrice = staged.retailPrice || p.retailPrice;
+        p.discount = staged.discountPercent;
+        p.advanceTax = staged.advanceTaxPercent;
+        p.purchaseCost = staged.unitCost;
+        p.salePrice = staged.tradePrice;
+        storage.updateProduct(p.id, p);
+        staged.productId = p.id;
+      } else {
+        const created = storage.addProduct(prodData);
+        if (created) staged.productId = created.id;
+      }
+    });
 
-          const purchases = storage.getPurchases();
-          const purchaseNumber = 'PUR-' + String(purchases.length + 1).padStart(6, '0');
+    // 2. Format Line Items for Unified Purchase Invoice Record
+    const formattedItems = items.map(staged => ({
+      productId: staged.productId || '',
+      itemNo: staged.itemNo,
+      code: staged.itemNo,
+      name: staged.name,
+      batchNumber: staged.batchNumber,
+      expiryDate: staged.expiryDate,
+      quantity: staged.quantity,
+      bonus: staged.bonus || 0,
+      price: staged.tradePrice,
+      tp: staged.tradePrice,
+      retailPrice: staged.retailPrice,
+      discountPercent: staged.discountPercent,
+      taxPercent: staged.advanceTaxPercent,
+      purchaseCost: staged.unitCost,
+      totalAmount: staged.lineNet
+    }));
 
-          const finalGrandTotal = Utils.round(grandTotal, 2);
-          const paidInput = document.getElementById('pm-pay-paid-amount');
-          const paidAmount = Utils.round(Math.max(0, parseFloat(paidInput ? paidInput.value : 0) || 0), 2);
-          const remainingAmount = Utils.round(Math.max(0, finalGrandTotal - paidAmount), 2);
+    const purchases = storage.getPurchases();
+    const purchaseNumber = 'PUR-' + String(purchases.length + 1).padStart(6, '0');
 
-          const purchaseInvoiceRecord = {
-            purchaseNumber: purchaseNumber,
-            invoiceNumber: invRef || purchaseNumber,
-            date: invDate,
-            time: Utils.nowTimeStr(),
-            companyId: comp ? comp.id : '',
-            companyName: companyName || (comp ? comp.name : 'General Supplier'),
-            companyContact: comp ? comp.phone : '',
-            paymentType: payType,
-            items: formattedItems,
-            subtotal: Utils.round(totalGross, 2),
-            totalDiscount: Utils.round(totalDiscount, 2),
-            tax: Utils.round(totalTax, 2),
-            grandTotal: finalGrandTotal,
-            paidAmount: paidAmount,
-            remainingAmount: remainingAmount,
-            notes: `Purchase invoice with ${items.length} line items.`
-          };
+    const finalGrandTotal = Utils.round(grandTotal, 2);
+    const paidInput = document.getElementById('pm-pay-paid-amount');
+    const paidAmount = Utils.round(Math.max(0, parseFloat(paidInput ? paidInput.value : 0) || 0), 2);
+    const remainingAmount = Utils.round(Math.max(0, finalGrandTotal - paidAmount), 2);
 
-          const savedPurchase = storage.addPurchase(purchaseInvoiceRecord);
+    const purchaseInvoiceRecord = {
+      purchaseNumber: purchaseNumber,
+      invoiceNumber: invRef || purchaseNumber,
+      date: invDate,
+      time: Utils.nowTimeStr(),
+      companyId: comp ? comp.id : '',
+      companyName: companyName || (comp ? comp.name : 'General Supplier'),
+      companyContact: comp ? comp.phone : '',
+      paymentType: payType,
+      items: formattedItems,
+      subtotal: Utils.round(totalGross, 2),
+      totalDiscount: Utils.round(totalDiscount, 2),
+      tax: Utils.round(totalTax, 2),
+      grandTotal: finalGrandTotal,
+      paidAmount: paidAmount,
+      remainingAmount: remainingAmount,
+      notes: `Purchase invoice with ${items.length} line items.`
+    };
 
-          app.showToast(`Purchase Invoice ${savedPurchase.purchaseNumber} saved (Paid: Rs. ${paidAmount.toFixed(2)}, Balance: Rs. ${remainingAmount.toFixed(2)})!`, 'success');
+    const savedPurchase = storage.addPurchase(purchaseInvoiceRecord);
 
-          // 3. Trigger Print Preview if requested
-          if (andPrint) {
-            this.printPurchaseInvoice(savedPurchase);
-          }
+    app.showToast(`Purchase Invoice ${savedPurchase.purchaseNumber} saved (Paid: Rs. ${paidAmount.toFixed(2)}, Balance: Rs. ${remainingAmount.toFixed(2)})!`, 'success');
 
-          // Reset state & close modal
-          this.stagedPurchaseItems = [];
-          app.closeModal('product-modal');
-          app.refreshCurrentView();
-        }
+    // 3. Trigger Print Preview if requested
+    if (andPrint) {
+      this.printPurchaseInvoice(savedPurchase);
+    }
 
-        saveSingleProductEdit() {
-          const editId = document.getElementById('prod-edit-id')?.value;
-          if (!editId) return;
+    // Reset state & close modal
+    this.stagedPurchaseItems = [];
+    app.closeModal('product-modal');
+    app.refreshCurrentView();
+  }
 
-          const itemNoElem = document.getElementById('pm-item-no');
-          const nameElem = document.getElementById('pm-name');
-          const itemNo = (itemNoElem ? itemNoElem.value : '').trim();
-          const name = (nameElem ? nameElem.value : '').trim();
+  saveSingleProductEdit() {
+    const editId = document.getElementById('prod-edit-id')?.value;
+    if (!editId) return;
 
-          if (!itemNo || !name) {
-            app.showToast('Please enter both Item Code and Product Name.', 'warning');
-            return;
-          }
+    const itemNoElem = document.getElementById('pm-item-no');
+    const nameElem = document.getElementById('pm-name');
+    const itemNo = (itemNoElem ? itemNoElem.value : '').trim();
+    const name = (nameElem ? nameElem.value : '').trim();
 
-          const retailPriceVal = parseFloat(document.getElementById('pm-retail-price')?.value) || 0;
-          const tpVal = parseFloat(document.getElementById('pm-tp')?.value) || (retailPriceVal ? Utils.round(retailPriceVal * 0.85, 2) : 0);
-          const discVal = parseFloat(document.getElementById('pm-discount-percent')?.value) || 0;
-          const advTaxVal = parseFloat(document.getElementById('pm-advance-tax')?.value) || 0;
-          
-          const unitDiscount = (tpVal * discVal) / 100;
-          const advTaxAmount = (tpVal * advTaxVal) / 100;
-          const calculatedCost = (tpVal - unitDiscount) + advTaxAmount;
-          const purchaseCostVal = parseFloat(document.getElementById('pm-purchase-cost')?.value) || Utils.round(calculatedCost, 2);
+    if (!itemNo || !name) {
+      app.showToast('Please enter both Item Code and Product Name.', 'warning');
+      return;
+    }
 
-          const existingP = storage.getProducts().find(p => p.id === editId);
+    const retailPriceVal = parseFloat(document.getElementById('pm-retail-price')?.value) || 0;
+    const tpVal = parseFloat(document.getElementById('pm-tp')?.value) || (retailPriceVal ? Utils.round(retailPriceVal * 0.85, 2) : 0);
+    const discVal = parseFloat(document.getElementById('pm-discount-percent')?.value) || 0;
+    const advTaxVal = parseFloat(document.getElementById('pm-advance-tax')?.value) || 0;
 
-          const data = {
-            itemNo: itemNo,
-            name: name,
-            genericName: document.getElementById('pm-generic')?.value || '',
-            company: document.getElementById('pm-company')?.value || '',
-            category: document.getElementById('pm-category')?.value || 'Medicines',
-            batchNumber: document.getElementById('pm-batch')?.value || '',
-            expiryDate: document.getElementById('pm-expiry')?.value || '',
-            tp: tpVal,
-            tradePrice: tpVal,
-            salePrice: tpVal,
-            retailPrice: retailPriceVal,
-            discount: discVal,
-            purchaseDiscount: discVal,
-            advanceTax: advTaxVal,
-            purchaseCost: purchaseCostVal,
-            purchasePrice: purchaseCostVal,
-            costPrice: purchaseCostVal,
-            purchasedQty: parseInt(document.getElementById('pm-purchased-qty')?.value) || (existingP ? existingP.purchasedQty : 0),
-            availableQty: existingP ? existingP.availableQty : (parseInt(document.getElementById('pm-purchased-qty')?.value) || 0),
-            minStockLevel: existingP ? existingP.minStockLevel : 10,
-            rackNumber: document.getElementById('pm-rack')?.value || ''
-          };
+    const unitDiscount = (tpVal * discVal) / 100;
+    const advTaxAmount = (tpVal * advTaxVal) / 100;
+    const calculatedCost = (tpVal - unitDiscount) + advTaxAmount;
+    const purchaseCostVal = parseFloat(document.getElementById('pm-purchase-cost')?.value) || Utils.round(calculatedCost, 2);
 
-          storage.updateProduct(editId, data);
-          app.showToast(`Product "${data.name}" updated successfully!`, 'success');
-          app.closeModal('product-modal');
-          app.refreshCurrentView();
-        }
+    const existingP = storage.getProducts().find(p => p.id === editId);
 
-        printPurchaseInvoice(purchase) {
-          const container = document.getElementById('printable-invoice');
-          if (!container) return;
+    const data = {
+      itemNo: itemNo,
+      name: name,
+      genericName: document.getElementById('pm-generic')?.value || '',
+      company: document.getElementById('pm-company')?.value || '',
+      category: document.getElementById('pm-category')?.value || 'Medicines',
+      batchNumber: document.getElementById('pm-batch')?.value || '',
+      expiryDate: document.getElementById('pm-expiry')?.value || '',
+      tp: tpVal,
+      tradePrice: tpVal,
+      salePrice: tpVal,
+      retailPrice: retailPriceVal,
+      discount: discVal,
+      purchaseDiscount: discVal,
+      advanceTax: advTaxVal,
+      purchaseCost: purchaseCostVal,
+      purchasePrice: purchaseCostVal,
+      costPrice: purchaseCostVal,
+      purchasedQty: parseInt(document.getElementById('pm-purchased-qty')?.value) || (existingP ? existingP.purchasedQty : 0),
+      bonusQty: parseInt(document.getElementById('pm-bonus-qty')?.value) || (existingP ? (existingP.bonusQty || 0) : 0),
+      availableQty: existingP ? existingP.availableQty : (parseInt(document.getElementById('pm-purchased-qty')?.value) || 0),
+      minStockLevel: existingP ? existingP.minStockLevel : 10,
+      rackNumber: document.getElementById('pm-rack')?.value || ''
+    };
 
-          container.innerHTML = this.buildPurchaseInvoicePrintTemplate(purchase, storage.getSettings());
-          setTimeout(() => { window.print(); }, 250);
-        }
+    storage.updateProduct(editId, data);
+    app.showToast(`Product "${data.name}" updated successfully!`, 'success');
+    app.closeModal('product-modal');
+    app.refreshCurrentView();
+  }
 
-        buildPurchaseInvoicePrintTemplate(pur, settings) {
-          const fmt = (v) => (parseFloat(v) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-          let rowsHtml = '';
-          let totalQtySum = 0;
+  printPurchaseInvoice(purchase) {
+    const container = document.getElementById('printable-invoice');
+    if (!container) return;
 
-          (pur.items || []).forEach((item, idx) => {
-            const q = parseInt(item.quantity) || 0;
-            totalQtySum += q;
-            const tp = parseFloat(item.tp || item.price) || 0;
-            const mrp = parseFloat(item.retailPrice) || 0;
-            const dis = parseFloat(item.discountPercent) || 0;
-            const tax = parseFloat(item.taxPercent) || 0;
-            const cost = parseFloat(item.purchaseCost) || 0;
-            const net = parseFloat(item.totalAmount) || 0;
+    container.innerHTML = this.buildPurchaseInvoicePrintTemplate(purchase, storage.getSettings());
+    setTimeout(() => { window.print(); }, 250);
+  }
 
-            rowsHtml += `
+  buildPurchaseInvoicePrintTemplate(pur, settings) {
+    const fmt = (v) => (parseFloat(v) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let rowsHtml = '';
+    let totalQtySum = 0;
+
+    (pur.items || []).forEach((item, idx) => {
+      const q = parseInt(item.quantity) || 0;
+      totalQtySum += q;
+      const tp = parseFloat(item.tp || item.price) || 0;
+      const mrp = parseFloat(item.retailPrice) || 0;
+      const dis = parseFloat(item.discountPercent) || 0;
+      const tax = parseFloat(item.taxPercent) || 0;
+      const cost = parseFloat(item.purchaseCost) || 0;
+      const net = parseFloat(item.totalAmount) || 0;
+
+      rowsHtml += `
               <tr style="border-bottom: 1px solid #e2e8f0; font-size: 0.72rem;">
                 <td style="padding: 5px 3px; text-align: center; color: #64748b;">${idx + 1}</td>
                 <td style="padding: 5px 4px; font-weight: 700; color: #0284c7; white-space: nowrap;">${item.itemNo || item.code || 'MED'}</td>
@@ -790,15 +794,16 @@ class ProductsModule {
                 <td style="padding: 5px 4px; text-align: right; color: #059669; white-space: nowrap;">${mrp > 0 ? fmt(mrp) : '-'}</td>
                 <td style="padding: 5px 4px; text-align: right; color: #475569; white-space: nowrap;">${fmt(tp)}</td>
                 <td style="padding: 5px 3px; text-align: center; font-weight: 800; color: #0284c7;">${q}</td>
+                <td style="padding: 5px 3px; text-align: center; font-weight: 800; color: #8b5cf6;">${item.bonus || 0}</td>
                 <td style="padding: 5px 3px; text-align: center; color: #d97706; font-weight: 700;">${dis > 0 ? dis + '%' : '-'}</td>
                 <td style="padding: 5px 3px; text-align: center; color: #6366f1; font-weight: 700;">${tax > 0 ? tax + '%' : '0%'}</td>
                 <td style="padding: 5px 4px; text-align: right; font-weight: 700; color: #0f172a; white-space: nowrap;">${fmt(cost)}</td>
                 <td style="padding: 5px 4px; text-align: right; font-weight: 800; color: #047857; white-space: nowrap;">${fmt(net)}</td>
               </tr>
             `;
-          });
+    });
 
-          return `
+    return `
             <div style="width: 100%; max-width: 980px; margin: 0 auto; background: #ffffff; padding: 14px 16px; font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #0f172a; box-sizing: border-box;">
               
               <!-- TOP BRAND HEADER -->
@@ -851,6 +856,7 @@ class ProductsModule {
                     <th style="padding: 6px 4px; text-align: right;">MRP</th>
                     <th style="padding: 6px 4px; text-align: right;">TP</th>
                     <th style="padding: 6px 3px; text-align: center;">Qty</th>
+                    <th style="padding: 6px 3px; text-align: center;">Bonus</th>
                     <th style="padding: 6px 3px; text-align: center;">Dis%</th>
                     <th style="padding: 6px 3px; text-align: center;">Tax%</th>
                     <th style="padding: 6px 4px; text-align: right;">Unit Net</th>
@@ -895,41 +901,41 @@ class ProductsModule {
               </div>
             </div>
           `;
-        }
+  }
 
-        deleteProduct(id) {
-          app.confirmDelete('Are you sure you want to remove this product from inventory?', () => {
-            storage.deleteProduct(id); app.showToast('Product deleted.', 'info'); app.refreshCurrentView();
-          });
-        }
+  deleteProduct(id) {
+    app.confirmDelete('Are you sure you want to remove this product from inventory?', () => {
+      storage.deleteProduct(id); app.showToast('Product deleted.', 'info'); app.refreshCurrentView();
+    });
+  }
 
-        renderInventory() {
-          const tbody = document.getElementById('inventory-tbody');
-          if (!tbody) return;
+  renderInventory() {
+    const tbody = document.getElementById('inventory-tbody');
+    if (!tbody) return;
 
-          const products = storage.getProducts();
-          const settings = storage.getSettings();
+    const products = storage.getProducts();
+    const settings = storage.getSettings();
 
-          const query = (document.getElementById('inv-search-input').value || '').toLowerCase().trim();
-          const statusFilter = document.getElementById('inv-status-filter').value || '';
+    const query = (document.getElementById('inv-search-input').value || '').toLowerCase().trim();
+    const statusFilter = document.getElementById('inv-status-filter').value || '';
 
-          const filtered = products.filter(p => {
-            const matchQuery = !query || p.name.toLowerCase().includes(query) || p.itemNo.toLowerCase().includes(query) || (p.company || '').toLowerCase().includes(query) || (p.batchNumber || '').toLowerCase().includes(query);
-            const isOut = p.availableQty <= 0;
-            const isLow = !isOut && p.availableQty <= (p.minStockLevel || settings.minStockAlert);
-            const status = isOut ? 'Out of Stock' : (isLow ? 'Low Stock' : 'In Stock');
-            return matchQuery && (!statusFilter || status === statusFilter);
-          });
+    const filtered = products.filter(p => {
+      const matchQuery = !query || p.name.toLowerCase().includes(query) || p.itemNo.toLowerCase().includes(query) || (p.company || '').toLowerCase().includes(query) || (p.batchNumber || '').toLowerCase().includes(query);
+      const isOut = p.availableQty <= 0;
+      const isLow = !isOut && p.availableQty <= (p.minStockLevel || settings.minStockAlert);
+      const status = isOut ? 'Out of Stock' : (isLow ? 'Low Stock' : 'In Stock');
+      return matchQuery && (!statusFilter || status === statusFilter);
+    });
 
-          if (!filtered.length) { Utils.emptyTable(tbody, 11, 'No inventory records match filter.'); return; }
+    if (!filtered.length) { Utils.emptyTable(tbody, 11, 'No inventory records match filter.'); return; }
 
-          let html = '';
-          filtered.forEach(p => {
-            const isOut = p.availableQty <= 0;
-            const isLow = !isOut && p.availableQty <= (p.minStockLevel || settings.minStockAlert);
-            const statusText = isOut ? 'Out of Stock' : (isLow ? 'Low Stock' : 'In Stock');
+    let html = '';
+    filtered.forEach(p => {
+      const isOut = p.availableQty <= 0;
+      const isLow = !isOut && p.availableQty <= (p.minStockLevel || settings.minStockAlert);
+      const statusText = isOut ? 'Out of Stock' : (isLow ? 'Low Stock' : 'In Stock');
 
-            html += `
+      html += `
             <tr>
               <td><span style="font-weight: 700; color: var(--primary);">${p.itemNo}</span></td>
               <td><div style="font-weight: 700;">${p.name}</div><div style="font-size: 0.72rem; color: var(--text-muted);">${p.rackNumber ? 'Rack: ' + p.rackNumber : ''}</div></td>
@@ -944,30 +950,30 @@ class ProductsModule {
               <td>${Utils.badge(statusText)}</td>
             </tr>
           `;
-          });
-          tbody.innerHTML = html;
-        }
+    });
+    tbody.innerHTML = html;
+  }
 
-        renderExpiry() {
-          const tbody = document.getElementById('expiry-tbody');
-          if (!tbody) return;
+  renderExpiry() {
+    const tbody = document.getElementById('expiry-tbody');
+    if (!tbody) return;
 
-          const expiryStatus = storage.getExpiryStatus();
-          document.getElementById('exp-count-expired').textContent = `${expiryStatus.expired.length} Items`;
-          document.getElementById('exp-count-30').textContent = `${expiryStatus.within30.length} Items`;
-          document.getElementById('exp-count-60').textContent = `${expiryStatus.within60.length} Items`;
-          document.getElementById('exp-count-90').textContent = `${expiryStatus.within90.length} Items`;
+    const expiryStatus = storage.getExpiryStatus();
+    document.getElementById('exp-count-expired').textContent = `${expiryStatus.expired.length} Items`;
+    document.getElementById('exp-count-30').textContent = `${expiryStatus.within30.length} Items`;
+    document.getElementById('exp-count-60').textContent = `${expiryStatus.within60.length} Items`;
+    document.getElementById('exp-count-90').textContent = `${expiryStatus.within90.length} Items`;
 
-          const filterVal = document.getElementById('expiry-filter-select').value || 'all';
-          let list = filterVal === 'all' ? [...expiryStatus.expired, ...expiryStatus.within30, ...expiryStatus.within60, ...expiryStatus.within90] : (expiryStatus[filterVal] || []);
+    const filterVal = document.getElementById('expiry-filter-select').value || 'all';
+    let list = filterVal === 'all' ? [...expiryStatus.expired, ...expiryStatus.within30, ...expiryStatus.within60, ...expiryStatus.within90] : (expiryStatus[filterVal] || []);
 
-          if (!list.length) { Utils.emptyTable(tbody, 8, '<i class="fa-solid fa-circle-check" style="color: #10b981;"></i> No products found for selected expiry alert.'); return; }
+    if (!list.length) { Utils.emptyTable(tbody, 8, '<i class="fa-solid fa-circle-check" style="color: #10b981;"></i> No products found for selected expiry alert.'); return; }
 
-          let html = '';
-          list.forEach(p => {
-            const isExpired = p.daysRemaining < 0;
-            const statusText = isExpired ? 'EXPIRED' : `Expires in ${p.daysRemaining} Days`;
-            html += `
+    let html = '';
+    list.forEach(p => {
+      const isExpired = p.daysRemaining < 0;
+      const statusText = isExpired ? 'EXPIRED' : `Expires in ${p.daysRemaining} Days`;
+      html += `
             <tr>
               <td><span style="font-weight: 700; color: var(--primary);">${p.itemNo}</span></td>
               <td><div style="font-weight: 700;">${p.name}</div></td>
@@ -979,15 +985,15 @@ class ProductsModule {
               <td>${Utils.badge(statusText, isExpired ? 'badge-expired' : '')}</td>
             </tr>
           `;
-          });
-          tbody.innerHTML = html;
-        }
-      }
+    });
+    tbody.innerHTML = html;
+  }
+}
 
-      var productsModule = window.productsModule || new ProductsModule();
+var productsModule = window.productsModule || new ProductsModule();
 
 
-      /* ==================== PURCHASES & SUPPLIER MODULE ==================== */
+/* ==================== PURCHASES & SUPPLIER MODULE ==================== */
 
 if (typeof global !== 'undefined') {
   global.ProductsModule = ProductsModule;

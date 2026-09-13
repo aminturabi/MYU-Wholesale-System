@@ -341,14 +341,15 @@ class PurchasesModule {
           let rowsHtml = '';
 
           items.forEach((item, idx) => {
-            const qty = parseInt(item.quantity || item.qty) || 0;
-            const bns = parseInt(item.bonus || item.bns) || 0;
+            const qty = parseInt(item.quantity !== undefined ? item.quantity : (item.qty || 0)) || 0;
+            const bns = parseInt(item.bonus !== undefined ? item.bonus : (item.bns || 0)) || 0;
             totalQtySum += qty;
-            const tp = parseFloat(item.tradePrice || item.tp || item.price) || 0;
-            const mrp = parseFloat(item.retailPrice || item.mrp) || (tp ? Utils.round(tp / 0.85, 2) : 0);
-            const dis = parseFloat(item.discountPercent || item.disPercent || item.discount) || 0;
-            const advTax = parseFloat(item.taxPercent || item.advanceTaxPercent || item.advTaxPercent || item.advanceTax || item.tax) || 0;
-            const unitNet = parseFloat(item.purchaseCost || item.unitCost || item.costPrice) || (tp * (1 - dis / 100) + (tp * advTax / 100));
+            const tp = parseFloat(item.tradePrice !== undefined ? item.tradePrice : (item.tp !== undefined ? item.tp : (item.price || 0))) || 0;
+            const mrp = parseFloat(item.retailPrice !== undefined ? item.retailPrice : (item.mrp || 0)) || (tp ? Utils.round(tp / 0.85, 2) : 0);
+            const dis = parseFloat(item.discountPercent !== undefined ? item.discountPercent : (item.disPercent !== undefined ? item.disPercent : (item.discount || 0))) || 0;
+            const advTax = parseFloat(item.taxPercent !== undefined ? item.taxPercent : (item.advTax !== undefined ? item.advTax : (item.tax || 0))) || 0;
+            const discCost = tp * (1 - dis / 100);
+            const unitNet = parseFloat(item.netPrice || item.purchaseCost || item.unitCost || item.costPrice) || (discCost + (discCost * advTax / 100));
             const lineNet = parseFloat(item.totalAmount || item.lineNet || item.total) || (qty * unitNet);
 
             rowsHtml += `
@@ -473,14 +474,15 @@ class PurchasesModule {
           let rowsHtml = '';
 
           items.forEach((item, idx) => {
-            const qty = parseInt(item.quantity || item.qty) || 0;
-            const bns = parseInt(item.bonus || item.bns) || 0;
+            const qty = parseInt(item.quantity !== undefined ? item.quantity : (item.qty || 0)) || 0;
+            const bns = parseInt(item.bonus !== undefined ? item.bonus : (item.bns || 0)) || 0;
             totalQtySum += qty;
-            const tp = parseFloat(item.tradePrice || item.tp || item.price) || 0;
-            const mrp = parseFloat(item.retailPrice || item.mrp) || (tp ? Utils.round(tp / 0.85, 2) : 0);
-            const dis = parseFloat(item.discountPercent || item.disPercent || item.discount) || 0;
-            const advTax = parseFloat(item.taxPercent || item.advanceTaxPercent || item.advTaxPercent || item.advanceTax || item.tax) || 0;
-            const unitNet = parseFloat(item.purchaseCost || item.unitCost || item.costPrice) || (tp * (1 - dis / 100) + (tp * advTax / 100));
+            const tp = parseFloat(item.tradePrice !== undefined ? item.tradePrice : (item.tp !== undefined ? item.tp : (item.price || 0))) || 0;
+            const mrp = parseFloat(item.retailPrice !== undefined ? item.retailPrice : (item.mrp || 0)) || (tp ? Utils.round(tp / 0.85, 2) : 0);
+            const dis = parseFloat(item.discountPercent !== undefined ? item.discountPercent : (item.disPercent !== undefined ? item.disPercent : (item.discount || 0))) || 0;
+            const advTax = parseFloat(item.taxPercent !== undefined ? item.taxPercent : (item.advTax !== undefined ? item.advTax : (item.tax || 0))) || 0;
+            const discCost = tp * (1 - dis / 100);
+            const unitNet = parseFloat(item.netPrice || item.purchaseCost || item.unitCost || item.costPrice) || (discCost + (discCost * advTax / 100));
             const lineNet = parseFloat(item.totalAmount || item.lineNet || item.total) || (qty * unitNet);
 
             rowsHtml += `

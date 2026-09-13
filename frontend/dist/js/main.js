@@ -549,6 +549,7 @@ class App {
           const productsMod = window.productsModule || (typeof productsModule !== 'undefined' ? productsModule : null);
           const expensesMod = window.expensesModule || (typeof expensesModule !== 'undefined' ? expensesModule : null);
           const reportsMod = window.reportsModule || (typeof reportsModule !== 'undefined' ? reportsModule : null);
+          const statementsMod = window.customerStatementsModule || (typeof customerStatementsModule !== 'undefined' ? customerStatementsModule : null);
 
           switch (this.currentView) {
             case 'dashboard-view': this.renderDashboard(); break;
@@ -564,6 +565,7 @@ class App {
             case 'customers-view': if (salesMod && typeof salesMod.renderCustomers === 'function') salesMod.renderCustomers(); break;
             case 'supplier-payments-view': if (purchasesMod && typeof purchasesMod.renderSupplierPayments === 'function') purchasesMod.renderSupplierPayments(); break;
             case 'customer-payments-view': if (salesMod && typeof salesMod.renderCustomerPayments === 'function') salesMod.renderCustomerPayments(); break;
+            case 'customer-statements-view': if (statementsMod && typeof statementsMod.initView === 'function') statementsMod.initView(); break;
             case 'pnl-expenses-view': if (expensesMod && typeof expensesMod.renderExpensesView === 'function') expensesMod.renderExpensesView(); break;
             case 'reports-view': if (reportsMod && typeof reportsMod.generateReport === 'function') reportsMod.generateReport(); break;
             case 'settings-view': this.loadSettingsForm(); break;
