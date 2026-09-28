@@ -26,7 +26,7 @@
 </head>
 
 <body>
-<!-- LOGIN SYSTEM (DISABLED & MOVED TO BOTTOM OF FILE) -->
+  <!-- LOGIN SYSTEM (DISABLED & MOVED TO BOTTOM OF FILE) -->
 
 
   <!-- ==================== MAIN APP CONTAINER ==================== -->
@@ -55,7 +55,8 @@
           <i class="fa-solid fa-chevron-down toggle-arrow"></i>
         </div>
         <div class="menu-category-content active">
-          <a class="menu-item active" data-view="dashboard-view" onclick="app.switchView('dashboard-view'); return false;">
+          <a class="menu-item active" data-view="dashboard-view"
+            onclick="app.switchView('dashboard-view'); return false;">
             <i class="fa-solid fa-chart-pie"></i>
             <span class="menu-label">Dashboard</span>
           </a>
@@ -83,7 +84,8 @@
             <i class="fa-solid fa-cart-plus"></i>
             <span class="menu-label">New Purchase</span>
           </a>
-          <a class="menu-item" data-view="purchase-history-view" onclick="app.switchView('purchase-history-view'); return false;">
+          <a class="menu-item" data-view="purchase-history-view"
+            onclick="app.switchView('purchase-history-view'); return false;">
             <i class="fa-solid fa-file-invoice-dollar"></i>
             <span class="menu-label">Purchase History</span>
           </a>
@@ -91,7 +93,8 @@
             <i class="fa-solid fa-building-flag"></i>
             <span class="menu-label">Companies / Suppliers</span>
           </a>
-          <a class="menu-item" data-view="supplier-payments-view" onclick="app.switchView('supplier-payments-view'); return false;">
+          <a class="menu-item" data-view="supplier-payments-view"
+            onclick="app.switchView('supplier-payments-view'); return false;">
             <i class="fa-solid fa-hand-holding-dollar"></i>
             <span class="menu-label">Supplier Payments</span>
           </a>
@@ -110,10 +113,14 @@
           <a class="menu-item" data-view="inventory-view" onclick="app.switchView('inventory-view'); return false;">
             <i class="fa-solid fa-warehouse"></i>
             <span class="menu-label">Stock Inventory</span>
+            <span id="counter-low-stock"
+              style="margin-left: auto; font-size: 0.72rem; padding: 2px 7px; border-radius: 10px; background: rgba(239, 68, 68, 0.2); color: #ef4444; font-weight: 700;"></span>
           </a>
           <a class="menu-item" data-view="expiry-view" onclick="app.switchView('expiry-view'); return false;">
             <i class="fa-solid fa-calendar-xmark"></i>
             <span class="menu-label">Expiry Management</span>
+            <span id="counter-expiry-alert"
+              style="margin-left: auto; font-size: 0.72rem; padding: 2px 7px; border-radius: 10px; background: rgba(245, 158, 11, 0.2); color: #f59e0b; font-weight: 700;"></span>
           </a>
         </div>
 
@@ -127,11 +134,13 @@
             <i class="fa-solid fa-user-gear"></i>
             <span class="menu-label">Customers / Pharmacies</span>
           </a>
-          <a class="menu-item" data-view="customer-payments-view" onclick="app.switchView('customer-payments-view'); return false;">
+          <a class="menu-item" data-view="customer-payments-view"
+            onclick="app.switchView('customer-payments-view'); return false;">
             <i class="fa-solid fa-money-bill-transfer"></i>
             <span class="menu-label">Customer Payments</span>
           </a>
-          <a class="menu-item" data-view="customer-statements-view" onclick="app.switchView('customer-statements-view'); return false;">
+          <a class="menu-item" data-view="customer-statements-view"
+            onclick="app.switchView('customer-statements-view'); return false;">
             <i class="fa-solid fa-file-invoice-dollar"></i>
             <span class="menu-label">Customer Statements</span>
           </a>
@@ -143,7 +152,8 @@
           <i class="fa-solid fa-chevron-down toggle-arrow"></i>
         </div>
         <div class="menu-category-content">
-          <a class="menu-item" data-view="pnl-expenses-view" onclick="app.switchView('pnl-expenses-view'); return false;">
+          <a class="menu-item" data-view="pnl-expenses-view"
+            onclick="app.switchView('pnl-expenses-view'); return false;">
             <i class="fa-solid fa-calculator"></i>
             <span class="menu-label">Profit & Loss & Expenses</span>
           </a>
@@ -252,6 +262,16 @@
               <div class="dash-stat-val" id="dash-today-profit">Rs. 0</div>
               <div class="dash-stat-sub" style="color: #10b981;">Net Sales Profit</div>
             </div>
+            <div class="dash-stat-box rose-accent" onclick="app.switchView('customers-view')">
+              <div class="dash-stat-label">Customer Receivables</div>
+              <div class="dash-stat-val" id="dash-customer-receivables">Rs. 0</div>
+              <div class="dash-stat-sub" style="color: #ef4444;">Market Credit Dues</div>
+            </div>
+            <div class="dash-stat-box amber-accent" onclick="app.switchView('companies-view')">
+              <div class="dash-stat-label">Supplier Payables</div>
+              <div class="dash-stat-val" id="dash-company-payables">Rs. 0</div>
+              <div class="dash-stat-sub" style="color: #f59e0b;">Company Payable Balances</div>
+            </div>
           </div>
 
           <!-- 5. STOCK OVERVIEW STRIP -->
@@ -275,10 +295,14 @@
               <i class="fa-solid fa-ban"></i> Out of Stock:
               <span class="dash-stock-count" id="dash-out-stock-count">0</span>
             </div>
+            <div class="dash-stock-indicator" onclick="app.filterExpiryStatus('Near Expiry')" style="color: #f59e0b;">
+              <i class="fa-solid fa-clock-rotate-left"></i> Near Expiry:
+              <span class="dash-stock-count" id="dash-near-expiry-count">0</span>
+            </div>
           </div>
 
           <!-- 6. LOW STOCK ALERTS -->
-          <div class="card-box" style="margin-bottom: 0;">
+          <div class="card-box" style="margin-bottom: 16px;">
             <div class="card-box-header">
               <h3 style="font-size: 1rem;"><i class="fa-solid fa-triangle-exclamation" style="color: #d97706;"></i> Low
                 Stock Alerts</h3>
@@ -286,6 +310,17 @@
                 All</button>
             </div>
             <div id="dash-low-stock-alert-list" style="max-height: 260px; overflow-y: auto;"></div>
+          </div>
+
+          <!-- 7. EXPIRY ALERTS -->
+          <div class="card-box" style="margin-bottom: 0;">
+            <div class="card-box-header">
+              <h3 style="font-size: 1rem;"><i class="fa-solid fa-clock-rotate-left" style="color: #ef4444;"></i>
+                Medicine Expiry Alerts</h3>
+              <button class="btn-secondary-myu btn-sm-myu" onclick="app.switchView('expiry-report-view')">View
+                All</button>
+            </div>
+            <div id="dash-expiry-alert-list" style="max-height: 260px; overflow-y: auto;"></div>
           </div>
 
         </section>
@@ -302,8 +337,10 @@
               <button class="btn-secondary-myu" onclick="billingModule.resetBill()">
                 <i class="fa-solid fa-rotate-left"></i> Clear / New Bill
               </button>
-              <button class="btn-primary-myu" onclick="billingModule.completeSaleAndPrint()" title="Save & Print Invoice (Ctrl + P)">
-                <i class="fa-solid fa-print"></i> Save & Print Invoice <kbd style="font-size: 0.72rem; opacity: 0.9; margin-left: 6px; padding: 2px 6px; background: rgba(0,0,0,0.22); border-radius: 4px; font-family: inherit;">Ctrl+P</kbd>
+              <button class="btn-primary-myu" onclick="billingModule.completeSaleAndPrint()"
+                title="Save & Print Invoice (Ctrl + P)">
+                <i class="fa-solid fa-print"></i> Save & Print Invoice <kbd
+                  style="font-size: 0.72rem; opacity: 0.9; margin-left: 6px; padding: 2px 6px; background: rgba(0,0,0,0.22); border-radius: 4px; font-family: inherit;">Ctrl+P</kbd>
               </button>
             </div>
           </div>
@@ -314,7 +351,8 @@
                 style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; background: #f8fafc; padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-color); flex-shrink: 0;">
                 <div>
                   <label class="form-label">Invoice Number</label>
-                  <input type="text" id="pos-invoice-num" class="form-control-myu" readonly style="font-weight: 700;" value="MYU-INV-000001">
+                  <input type="text" id="pos-invoice-num" class="form-control-myu" readonly style="font-weight: 700;"
+                    value="MYU-INV-000001">
                 </div>
                 <div>
                   <label class="form-label">Date & Time</label>
@@ -343,12 +381,14 @@
                 <label class="form-label required">Add Item (Type Product Name, Generic, Item # or Batch)</label>
                 <div style="position: relative; z-index: 500;">
                   <input type="text" id="pos-product-search" class="form-control-myu"
-                    placeholder="Search medicines or surgical items..." autocomplete="off" style="padding-left: 38px !important;"
-                    oninput="billingModule.handleSearchInput(this.value)"
+                    placeholder="Search medicines or surgical items..." autocomplete="off"
+                    style="padding-left: 38px !important;" oninput="billingModule.handleSearchInput(this.value)"
                     onfocus="billingModule.handleSearchInput(this.value)">
                   <i class="fa-solid fa-magnifying-glass"
                     style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; z-index: 10; font-size: 0.85rem;"></i>
-                  <div class="search-results-dropdown" id="pos-search-results" style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 10000; max-height: 280px; overflow-y: auto; background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);"></div>
+                  <div class="search-results-dropdown" id="pos-search-results"
+                    style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 10000; max-height: 280px; overflow-y: auto; background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);">
+                  </div>
                 </div>
               </div>
 
@@ -370,6 +410,7 @@
                       <th style="width: 65px;">DIS %</th>
                       <th style="width: 65px;">EXT %</th>
                       <th style="width: 75px;">ADV TAX %</th>
+                      <th style="width: 85px;">DEFAULT PRICE</th>
                       <th style="width: 85px;">NET</th>
                       <th style="width: 95px;">AMOUNT</th>
                       <th style="min-width: 145px; text-align: center;">MARGIN / PROFIT</th>
@@ -409,11 +450,14 @@
                 <span id="pos-net-amount">Rs. 0.00</span>
               </div>
 
-              <div class="summary-row" style="background: #f8fafc; padding: 6px 10px; border-radius: 6px; margin: 8px 0; border: 1px dashed #cbd5e1;">
-                <span style="font-size: 0.82rem; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 5px;">
+              <div class="summary-row"
+                style="background: #f8fafc; padding: 6px 10px; border-radius: 6px; margin: 8px 0; border: 1px dashed #cbd5e1;">
+                <span
+                  style="font-size: 0.82rem; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 5px;">
                   <i class="fa-solid fa-chart-line" style="color: var(--primary);"></i> Estimated Profit:
                 </span>
-                <span id="pos-estimated-profit" style="font-weight: 800; font-size: 0.92rem; color: #10b981;">Rs. 0.00</span>
+                <span id="pos-estimated-profit" style="font-weight: 800; font-size: 0.92rem; color: #10b981;">Rs.
+                  0.00</span>
               </div>
 
               <div style="margin-top: 14px;">
@@ -430,13 +474,19 @@
               </div>
 
               <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px; margin-top: 20px;">
-                <button type="button" class="btn-secondary-myu" id="btn-save-only-sale" onclick="billingModule.completeSaleOnly()"
-                  style="justify-content: center; padding: 12px 10px; font-size: 0.95rem; font-weight: 700;" title="Save Invoice Only (Ctrl + S)">
-                  <i class="fa-solid fa-floppy-disk"></i> Save Only <kbd style="font-size: 0.72rem; opacity: 0.9; margin-left: 6px; padding: 2px 6px; background: rgba(0,0,0,0.12); border-radius: 4px; font-family: inherit;">Ctrl+S</kbd>
+                <button type="button" class="btn-secondary-myu" id="btn-save-only-sale"
+                  onclick="billingModule.completeSaleOnly()"
+                  style="justify-content: center; padding: 12px 10px; font-size: 0.95rem; font-weight: 700;"
+                  title="Save Invoice Only (Ctrl + S)">
+                  <i class="fa-solid fa-floppy-disk"></i> Save Only <kbd
+                    style="font-size: 0.72rem; opacity: 0.9; margin-left: 6px; padding: 2px 6px; background: rgba(0,0,0,0.12); border-radius: 4px; font-family: inherit;">Ctrl+S</kbd>
                 </button>
-                <button type="button" class="btn-primary-myu" id="btn-complete-sale" onclick="billingModule.completeSaleAndPrint()"
-                  style="justify-content: center; padding: 12px 10px; font-size: 0.95rem; font-weight: 700;" title="Save & Print Invoice (Ctrl + P)">
-                  <i class="fa-solid fa-print"></i> Save & Print <kbd style="font-size: 0.72rem; opacity: 0.9; margin-left: 6px; padding: 2px 6px; background: rgba(0,0,0,0.22); border-radius: 4px; font-family: inherit;">Ctrl+P</kbd>
+                <button type="button" class="btn-primary-myu" id="btn-complete-sale"
+                  onclick="billingModule.completeSaleAndPrint()"
+                  style="justify-content: center; padding: 12px 10px; font-size: 0.95rem; font-weight: 700;"
+                  title="Save & Print Invoice (Ctrl + P)">
+                  <i class="fa-solid fa-print"></i> Save & Print <kbd
+                    style="font-size: 0.72rem; opacity: 0.9; margin-left: 6px; padding: 2px 6px; background: rgba(0,0,0,0.22); border-radius: 4px; font-family: inherit;">Ctrl+P</kbd>
                 </button>
               </div>
             </div>
@@ -718,16 +768,17 @@
                 </button>
               </div>
               <div class="table-responsive" style="margin-bottom: 16px;">
-                <table class="custom-table" id="pur-items-table" style="min-width: 980px;">
+                <table class="custom-table" id="pur-items-table" style="min-width: 1040px;">
                   <thead>
                     <tr>
-                      <th style="min-width: 280px;">Product</th>
-                      <th style="width: 125px;">Batch #</th>
-                      <th style="width: 145px;">Expiry Date</th>
-                      <th style="width: 95px;">Qty</th>
-                      <th style="width: 90px;">Bonus</th>
-                      <th style="width: 120px;">TP (Cost)</th>
-                      <th style="width: 100px;">Disc %</th>
+                      <th style="min-width: 260px;">Product</th>
+                      <th style="width: 120px;">Batch #</th>
+                      <th style="width: 140px;">Expiry Date</th>
+                      <th style="width: 85px;">Qty</th>
+                      <th style="width: 80px;">Bonus</th>
+                      <th style="width: 110px;">TP (Cost)</th>
+                      <th style="width: 90px;">Disc %</th>
+                      <th style="width: 95px; text-align: center;">Adv Tax %</th>
                       <th style="width: 130px; text-align: right;">Total Amount</th>
                       <th style="width: 50px; text-align: center;">Action</th>
                     </tr>
@@ -762,6 +813,10 @@
                   <div class="summary-row">
                     <span>Total Discount:</span>
                     <span id="pur-total-disc" style="color: #059669;">Rs. 0.00</span>
+                  </div>
+                  <div class="summary-row">
+                    <span>Advance Tax:</span>
+                    <span id="pur-total-tax" style="font-weight: 700;">Rs. 0.00</span>
                   </div>
                   <div class="summary-row total-row">
                     <span>Grand Total:</span>
@@ -962,7 +1017,8 @@
         <section id="customer-statements-view" class="view-page hidden">
           <div class="page-header">
             <div class="page-title">
-              <h1><i class="fa-solid fa-file-invoice-dollar" style="color: var(--primary); margin-right: 8px;"></i> Customer Ledger Statement</h1>
+              <h1><i class="fa-solid fa-file-invoice-dollar" style="color: var(--primary); margin-right: 8px;"></i>
+                Customer Ledger Statement</h1>
               <p>Customer product-wise purchase & return ledger statement</p>
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -983,26 +1039,34 @@
 
           <!-- FILTERS & SELECTION CARD -->
           <div class="card-box" style="margin-bottom: 20px;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; align-items: flex-end;">
-              
+            <div
+              style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; align-items: flex-end;">
+
               <!-- Search Customer / Pharmacy -->
               <div class="form-group" style="margin-bottom: 0;">
-                <label for="stmt-customer-search"><i class="fa-solid fa-magnifying-glass"></i> Search Customer / Pharmacy:</label>
-                <input type="text" id="stmt-customer-search" class="form-control-myu" placeholder="Type customer or pharmacy name..." oninput="customerStatementsModule.filterCustomers(this.value)">
+                <label for="stmt-customer-search"><i class="fa-solid fa-magnifying-glass"></i> Search Customer /
+                  Pharmacy:</label>
+                <input type="text" id="stmt-customer-search" class="form-control-myu"
+                  placeholder="Type customer or pharmacy name..."
+                  oninput="customerStatementsModule.filterCustomers(this.value)">
               </div>
 
               <!-- Customer Selector -->
               <div class="form-group" style="margin-bottom: 0;">
-                <label for="stmt-customer-select"><i class="fa-solid fa-user-tag"></i> Select Customer / Pharmacy:</label>
-                <select id="stmt-customer-select" class="form-control-myu" onchange="customerStatementsModule.onCustomerChange()" style="font-weight: 600; font-size: 0.95rem;">
+                <label for="stmt-customer-select"><i class="fa-solid fa-user-tag"></i> Select Customer /
+                  Pharmacy:</label>
+                <select id="stmt-customer-select" class="form-control-myu"
+                  onchange="customerStatementsModule.onCustomerChange()" style="font-weight: 600; font-size: 0.95rem;">
                   <!-- Populated dynamically -->
                 </select>
               </div>
 
               <!-- Period Selector -->
               <div class="form-group" style="margin-bottom: 0;">
-                <label for="stmt-period-select"><i class="fa-regular fa-calendar-days"></i> Select Statement Period:</label>
-                <select id="stmt-period-select" class="form-control-myu" onchange="customerStatementsModule.onPeriodChange()" style="font-weight: 600;">
+                <label for="stmt-period-select"><i class="fa-regular fa-calendar-days"></i> Select Statement
+                  Period:</label>
+                <select id="stmt-period-select" class="form-control-myu"
+                  onchange="customerStatementsModule.onPeriodChange()" style="font-weight: 600;">
                   <option value="today">Today</option>
                   <option value="yesterday">Yesterday</option>
                   <option value="thisWeek">This Week</option>
@@ -1018,11 +1082,13 @@
               <div id="stmt-custom-range-container" style="display: none; gap: 10px; flex: 2; min-width: 280px;">
                 <div class="form-group" style="margin-bottom: 0; flex: 1;">
                   <label for="stmt-start-date">From Date:</label>
-                  <input type="date" id="stmt-start-date" class="form-control-myu" onchange="customerStatementsModule.renderStatement()">
+                  <input type="date" id="stmt-start-date" class="form-control-myu"
+                    onchange="customerStatementsModule.renderStatement()">
                 </div>
                 <div class="form-group" style="margin-bottom: 0; flex: 1;">
                   <label for="stmt-end-date">To Date:</label>
-                  <input type="date" id="stmt-end-date" class="form-control-myu" onchange="customerStatementsModule.renderStatement()">
+                  <input type="date" id="stmt-end-date" class="form-control-myu"
+                    onchange="customerStatementsModule.renderStatement()">
                 </div>
               </div>
 
@@ -1030,32 +1096,82 @@
           </div>
 
           <!-- CUSTOMER PROFILE & STATEMENT OVERVIEW -->
-          <div class="card-box" style="margin-bottom: 20px; background: linear-gradient(to right, #f8fafc, #ffffff); border-left: 5px solid var(--primary);">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+          <div class="card-box"
+            style="margin-bottom: 20px; background: linear-gradient(to right, #f8fafc, #ffffff); border-left: 5px solid var(--primary);">
+            <div
+              style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
               <div>
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
-                  <h3 id="stmt-disp-cust-name" style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a;">Customer Name</h3>
-                  <span id="stmt-disp-cust-shop" class="badge-status" style="background: #e0f2fe; color: #0369a1; font-weight: 700;">Pharmacy / Shop</span>
+                  <h3 id="stmt-disp-cust-name" style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a;">
+                    Customer Name</h3>
+                  <span id="stmt-disp-cust-shop" class="badge-status"
+                    style="background: #e0f2fe; color: #0369a1; font-weight: 700;">Pharmacy / Shop</span>
                 </div>
-                <div style="font-size: 0.85rem; color: #475569; display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px;">
-                  <span><i class="fa-solid fa-phone" style="color: var(--primary);"></i> <strong id="stmt-disp-cust-phone">-</strong></span>
-                  <span><i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> <span id="stmt-disp-cust-address">-</span></span>
-                  <span><i class="fa-solid fa-calendar-check" style="color: var(--primary);"></i> Period: <strong id="stmt-disp-period" style="color: #0f172a;">-</strong></span>
+                <div
+                  style="font-size: 0.85rem; color: #475569; display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px;">
+                  <span><i class="fa-solid fa-phone" style="color: var(--primary);"></i> <strong
+                      id="stmt-disp-cust-phone">-</strong></span>
+                  <span><i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> <span
+                      id="stmt-disp-cust-address">-</span></span>
+                  <span><i class="fa-solid fa-calendar-check" style="color: var(--primary);"></i> Period: <strong
+                      id="stmt-disp-period" style="color: #0f172a;">-</strong></span>
                 </div>
               </div>
 
-              <div style="text-align: right; background: #ffffff; padding: 10px 18px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <div style="font-size: 0.78rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Ledger Due Balance</div>
-                <div id="stmt-disp-cust-balance" style="font-size: 1.3rem; font-weight: 900; color: #ef4444; line-height: 1.2; margin-top: 2px;">Rs. 0.00</div>
+              <div
+                style="text-align: right; background: #ffffff; padding: 10px 18px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="font-size: 0.78rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Ledger Due
+                  Balance</div>
+                <div id="stmt-disp-cust-balance"
+                  style="font-size: 1.3rem; font-weight: 900; color: #ef4444; line-height: 1.2; margin-top: 2px;">Rs.
+                  0.00</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STATEMENT KPI SUMMARY CARDS -->
+          <div class="stats-grid" style="margin-bottom: 20px;">
+            <div class="stat-card" style="border-left: 5px solid var(--primary);">
+              <div class="stat-icon teal"><i class="fa-solid fa-file-invoice"></i></div>
+              <div class="stat-details">
+                <h4>Invoices & Returns</h4>
+                <div class="stat-value" id="stmt-kpi-invoices">0 Sales</div>
+                <div class="stat-sub">Total Transactions</div>
+              </div>
+            </div>
+            <div class="stat-card" style="border-left: 5px solid #3b82f6;">
+              <div class="stat-icon blue"><i class="fa-solid fa-pills"></i></div>
+              <div class="stat-details">
+                <h4>Distinct Products</h4>
+                <div class="stat-value" id="stmt-kpi-products">0</div>
+                <div class="stat-sub">Medicines Purchased</div>
+              </div>
+            </div>
+            <div class="stat-card" style="border-left: 5px solid #10b981;">
+              <div class="stat-icon emerald"><i class="fa-solid fa-boxes-stacked"></i></div>
+              <div class="stat-details">
+                <h4>Total Units</h4>
+                <div class="stat-value" id="stmt-kpi-units">0</div>
+                <div class="stat-sub">Net Quantity (Packs/Units)</div>
+              </div>
+            </div>
+            <div class="stat-card" style="border-left: 5px solid #8b5cf6;">
+              <div class="stat-icon purple"><i class="fa-solid fa-coins"></i></div>
+              <div class="stat-details">
+                <h4>Total Net Value</h4>
+                <div class="stat-value" id="stmt-kpi-value" style="color: var(--primary);">Rs. 0.00</div>
+                <div class="stat-sub">Net Statement Amount</div>
               </div>
             </div>
           </div>
 
           <!-- STATEMENT DATA TABLE CARD -->
           <div class="card-box">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9;">
+            <div
+              style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9;">
               <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a;">
-                <i class="fa-solid fa-table-list" style="color: var(--primary);"></i> Product-Wise Purchase Statement Table
+                <i class="fa-solid fa-table-list" style="color: var(--primary);"></i> Product-Wise Purchase Statement
+                Table
               </h3>
               <div style="font-size: 0.8rem; color: #64748b;">
                 Group Total & Company Grand Totals calculated from actual invoices & returns
@@ -1091,7 +1207,8 @@
                 <label class="form-label" style="font-weight: 700; color: var(--text-main); margin-bottom: 6px;">
                   <i class="fa-solid fa-chart-pie" style="color: var(--primary);"></i> Select Report Type
                 </label>
-                <select id="report-type-select" class="form-control-myu" style="font-weight: 600;" onchange="reportsModule.generateReport()">
+                <select id="report-type-select" class="form-control-myu" style="font-weight: 600;"
+                  onchange="reportsModule.generateReport()">
                   <option value="dailySales">📅 Daily Sales Breakdown Report</option>
                   <option value="monthlySales">📊 Monthly Sales Report</option>
                   <option value="profit">💰 Profit & Margin Analysis Report</option>
@@ -1103,7 +1220,8 @@
                 </select>
               </div>
               <div style="margin: 0;">
-                <button class="btn-primary-myu" onclick="reportsModule.generateReport()" style="height: 42px; padding: 0 20px; font-weight: 700;">
+                <button class="btn-primary-myu" onclick="reportsModule.generateReport()"
+                  style="height: 42px; padding: 0 20px; font-weight: 700;">
                   <i class="fa-solid fa-arrows-rotate"></i> Generate Report
                 </button>
               </div>
@@ -1194,17 +1312,22 @@
                 <label class="form-label">Restore Data from JSON File</label>
                 <input type="file" id="import-json-file" accept=".json" class="form-control-myu"
                   style="margin-bottom: 10px;">
-                <button class="btn-secondary-myu" id="btn-import-data" style="width: 100%; justify-content: center; margin-bottom: 16px;">
+                <button class="btn-secondary-myu" id="btn-import-data"
+                  style="width: 100%; justify-content: center; margin-bottom: 16px;">
                   <i class="fa-solid fa-upload"></i> Restore Backup Data
                 </button>
               </div>
 
-              <div style="border-top: 1px dashed #fca5a5; padding-top: 16px; margin-top: 16px; background: #fff1f2; border-radius: 8px; padding: 14px;">
-                <label class="form-label" style="color: #991b1b; font-weight: 700;">Clear All Dummy Data (Start Fresh)</label>
+              <div
+                style="border-top: 1px dashed #fca5a5; padding-top: 16px; margin-top: 16px; background: #fff1f2; border-radius: 8px; padding: 14px;">
+                <label class="form-label" style="color: #991b1b; font-weight: 700;">Clear All Dummy Data (Start
+                  Fresh)</label>
                 <p style="font-size: 0.78rem; color: #9f1239; margin-bottom: 10px;">
-                  Wipes out all demo products, sales, purchases, customers, and expenses so you can start entering your real wholesale data.
+                  Wipes out all demo products, sales, purchases, customers, and expenses so you can start entering your
+                  real wholesale data.
                 </p>
-                <button type="button" class="btn-secondary-myu" onclick="app.clearAllDummyData()" style="width: 100%; justify-content: center; background: #dc2626; color: #fff; border: none;">
+                <button type="button" class="btn-secondary-myu" onclick="app.clearAllDummyData()"
+                  style="width: 100%; justify-content: center; background: #dc2626; color: #fff; border: none;">
                   <i class="fa-solid fa-trash-can"></i> Clear All Data & Start Fresh
                 </button>
               </div>
@@ -1393,7 +1516,8 @@
               </p>
             </div>
             <div>
-              <button class="btn-primary-myu" id="btn-process-new-return" onclick="window.openProcessReturnModal(); return false;"><i class="fa-solid fa-plus"></i>
+              <button class="btn-primary-myu" id="btn-process-new-return"
+                onclick="window.openProcessReturnModal(); return false;"><i class="fa-solid fa-plus"></i>
                 Process New Return</button>
             </div>
           </div>
@@ -1489,26 +1613,35 @@
           <input type="hidden" id="prod-edit-id">
 
           <!-- Section 1: Supplier & Invoice Metadata -->
-          <div style="background: #f1f5f9; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;">
+          <div
+            style="background: #f1f5f9; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;">
             <div style="display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr; gap: 12px; align-items: end;">
               <div class="form-group" style="margin-bottom: 0;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                  <label class="form-label required" style="margin-bottom: 0; font-weight: 700; font-size: 0.78rem;">Supplier / Company</label>
+                  <label class="form-label required"
+                    style="margin-bottom: 0; font-weight: 700; font-size: 0.78rem;">Supplier / Company</label>
                   <a href="#" onclick="purchasesModule.openCompanyModal(); return false;"
-                    style="font-size: 0.72rem; color: var(--primary); font-weight: 700; text-decoration: none;">+ Add New</a>
+                    style="font-size: 0.72rem; color: var(--primary); font-weight: 700; text-decoration: none;">+ Add
+                    New</a>
                 </div>
-                <select id="pm-company" class="form-control-myu" style="font-weight: 600; padding: 6px 10px; font-size: 0.85rem;"></select>
+                <select id="pm-company" class="form-control-myu"
+                  style="font-weight: 600; padding: 6px 10px; font-size: 0.85rem;"></select>
               </div>
               <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="font-weight: 600; font-size: 0.78rem; margin-bottom: 4px;">Supplier Invoice #</label>
-                <input type="text" id="pm-inv-ref" class="form-control-myu" placeholder="e.g. INV-9982" style="padding: 6px 10px; font-size: 0.85rem;">
+                <label class="form-label" style="font-weight: 600; font-size: 0.78rem; margin-bottom: 4px;">Supplier
+                  Invoice #</label>
+                <input type="text" id="pm-inv-ref" class="form-control-myu" placeholder="e.g. INV-9982"
+                  style="padding: 6px 10px; font-size: 0.85rem;">
               </div>
               <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="font-weight: 600; font-size: 0.78rem; margin-bottom: 4px;">Invoice Date</label>
-                <input type="date" id="pm-inv-date" class="form-control-myu" style="padding: 6px 10px; font-size: 0.85rem;">
+                <label class="form-label" style="font-weight: 600; font-size: 0.78rem; margin-bottom: 4px;">Invoice
+                  Date</label>
+                <input type="date" id="pm-inv-date" class="form-control-myu"
+                  style="padding: 6px 10px; font-size: 0.85rem;">
               </div>
               <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="font-weight: 600; font-size: 0.78rem; margin-bottom: 4px;">Payment Type</label>
+                <label class="form-label" style="font-weight: 600; font-size: 0.78rem; margin-bottom: 4px;">Payment
+                  Type</label>
                 <select id="pm-inv-paytype" class="form-control-myu" style="padding: 6px 10px; font-size: 0.85rem;">
                   <option value="Cash">Cash</option>
                   <option value="Credit / Payable">Credit / Payable</option>
@@ -1520,18 +1653,23 @@
           </div>
 
           <!-- Section 2: Product & Batch Identification -->
-          <div style="display: grid; grid-template-columns: 1.2fr 2fr 1.5fr 1.2fr 1.2fr 1.2fr 1fr; gap: 10px; margin-bottom: 12px;">
+          <div
+            style="display: grid; grid-template-columns: 1.2fr 2fr 1.5fr 1.2fr 1.2fr 1.2fr 1fr; gap: 10px; margin-bottom: 12px;">
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label required" style="font-weight: 700; font-size: 0.76rem;">Item Code</label>
-              <input type="text" id="pm-item-no" class="form-control-myu" placeholder="MED-1009" required style="font-weight: 700; font-size: 0.82rem; padding: 6px 8px;">
+              <input type="text" id="pm-item-no" class="form-control-myu" placeholder="MED-1009" required
+                style="font-weight: 700; font-size: 0.82rem; padding: 6px 8px;">
             </div>
             <div class="form-group" style="margin-bottom: 0;">
-              <label class="form-label required" style="font-weight: 700; font-size: 0.76rem;">Product / Medicine Name</label>
-              <input type="text" id="pm-name" class="form-control-myu" placeholder="e.g. Augmentin 625mg" required style="font-weight: 700; font-size: 0.82rem; padding: 6px 8px;">
+              <label class="form-label required" style="font-weight: 700; font-size: 0.76rem;">Product / Medicine
+                Name</label>
+              <input type="text" id="pm-name" class="form-control-myu" placeholder="e.g. Augmentin 625mg" required
+                style="font-weight: 700; font-size: 0.82rem; padding: 6px 8px;">
             </div>
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label" style="font-weight: 600; font-size: 0.76rem;">Generic Name</label>
-              <input type="text" id="pm-generic" class="form-control-myu" placeholder="e.g. Co-Amoxiclav" style="font-size: 0.82rem; padding: 6px 8px;">
+              <input type="text" id="pm-generic" class="form-control-myu" placeholder="e.g. Co-Amoxiclav"
+                style="font-size: 0.82rem; padding: 6px 8px;">
             </div>
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label" style="font-weight: 600; font-size: 0.76rem;">Category</label>
@@ -1549,7 +1687,8 @@
             </div>
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label" style="font-weight: 600; font-size: 0.76rem;">Batch Number</label>
-              <input type="text" id="pm-batch" class="form-control-myu" placeholder="AUG-8899" style="font-size: 0.82rem; padding: 6px 8px;">
+              <input type="text" id="pm-batch" class="form-control-myu" placeholder="AUG-8899"
+                style="font-size: 0.82rem; padding: 6px 8px;">
             </div>
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label" style="font-weight: 600; font-size: 0.76rem;">Expiry Date</label>
@@ -1557,70 +1696,107 @@
             </div>
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label" style="font-weight: 600; font-size: 0.76rem;">Rack / Shelf</label>
-              <input type="text" id="pm-rack" class="form-control-myu" placeholder="A-1" style="font-size: 0.82rem; padding: 6px 6px;">
+              <input type="text" id="pm-rack" class="form-control-myu" placeholder="A-1"
+                style="font-size: 0.82rem; padding: 6px 6px;">
             </div>
           </div>
 
           <!-- Section 3: Reverse Retail-First Pricing & Purchase Flow -->
-          <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
-              <span style="font-size: 0.78rem; font-weight: 800; color: #334155; text-transform: uppercase; letter-spacing: 0.6px; display: flex; align-items: center; gap: 6px;">
+          <div
+            style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px;">
+            <div
+              style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+              <span
+                style="font-size: 0.78rem; font-weight: 800; color: #334155; text-transform: uppercase; letter-spacing: 0.6px; display: flex; align-items: center; gap: 6px;">
                 <i class="fa-solid fa-tags" style="color: var(--primary);"></i> Pricing & Purchase Line Specifications
               </span>
-              <span style="font-size: 0.72rem; color: #64748b;">MRP &rarr; TP (85%) &rarr; Qty &rarr; Bonus &rarr; Dis% &rarr; Adv Tax% &rarr; Unit Cost (NET) &rarr; Line Net</span>
+              <span style="font-size: 0.72rem; color: #64748b;">MRP &rarr; TP (85%) &rarr; Qty &rarr; Bonus &rarr; Dis%
+                &rarr; Adv Tax% &rarr; Unit Cost (NET) &rarr; Line Net</span>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(8, 1fr) auto; gap: 8px; align-items: end;">
+            <div style="display: grid; grid-template-columns: repeat(9, 1fr) auto; gap: 8px; align-items: end;">
               <!-- Field 1: Retail Price (MRP) -->
               <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label required" style="margin-bottom: 4px; font-weight: 700; color: #1e293b; font-size: 0.76rem;">Retail (MRP)</label>
-                <input type="number" step="0.01" id="pm-retail-price" class="form-control-myu" placeholder="350.00" style="font-weight: 800; color: #059669; padding: 6px 6px; font-size: 0.82rem;">
+                <label class="form-label required"
+                  style="margin-bottom: 4px; font-weight: 700; color: #1e293b; font-size: 0.76rem;">Retail (MRP)</label>
+                <input type="number" step="0.01" id="pm-retail-price" class="form-control-myu" placeholder="350.00"
+                  style="font-weight: 800; color: #059669; padding: 6px 6px; font-size: 0.82rem;">
               </div>
 
               <!-- Field 2: Trade Price (TP) -->
               <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label required" style="margin-bottom: 4px; font-weight: 700; color: #1e293b; font-size: 0.76rem;">Trade (TP)</label>
-                <input type="number" step="0.01" id="pm-tp" class="form-control-myu" placeholder="297.50" style="font-weight: 800; color: var(--primary); padding: 6px 6px; font-size: 0.82rem;">
+                <label class="form-label required"
+                  style="margin-bottom: 4px; font-weight: 700; color: #1e293b; font-size: 0.76rem;">Trade (TP)</label>
+                <input type="number" step="0.01" id="pm-tp" class="form-control-myu" placeholder="297.50"
+                  style="font-weight: 800; color: var(--primary); padding: 6px 6px; font-size: 0.82rem;">
               </div>
 
               <!-- Field 3: Purchased Qty -->
               <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label required" style="margin-bottom: 4px; font-weight: 700; color: #1e293b; font-size: 0.76rem;">Purchased Qty</label>
-                <input type="number" id="pm-purchased-qty" class="form-control-myu" value="0" min="0" style="font-weight: 800; color: #0284c7; padding: 6px 6px; font-size: 0.82rem;">
+                <label class="form-label required"
+                  style="margin-bottom: 4px; font-weight: 700; color: #1e293b; font-size: 0.76rem;">Purchased
+                  Qty</label>
+                <input type="number" id="pm-purchased-qty" class="form-control-myu" value="0" min="0"
+                  style="font-weight: 800; color: #0284c7; padding: 6px 6px; font-size: 0.82rem;">
               </div>
 
               <!-- Field 4: Bonus -->
               <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="margin-bottom: 4px; font-weight: 700; color: #1e293b; font-size: 0.76rem;">Bonus</label>
-                <input type="number" id="pm-bonus-qty" class="form-control-myu" value="0" min="0" placeholder="0" style="font-weight: 800; color: #8b5cf6; padding: 6px 6px; font-size: 0.82rem;">
+                <label class="form-label"
+                  style="margin-bottom: 4px; font-weight: 700; color: #1e293b; font-size: 0.76rem;">Bonus</label>
+                <input type="number" id="pm-bonus-qty" class="form-control-myu" value="0" min="0" placeholder="0"
+                  style="font-weight: 800; color: #8b5cf6; padding: 6px 6px; font-size: 0.82rem;">
               </div>
 
               <!-- Field 5: Purchase Discount % -->
               <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="margin-bottom: 4px; font-weight: 700; color: #1e293b; font-size: 0.76rem;">Purchase Dis %</label>
-                <input type="number" step="0.1" id="pm-discount-percent" class="form-control-myu" value="25" placeholder="25" style="font-weight: 700; color: #d97706; padding: 6px 6px; font-size: 0.82rem;">
+                <label class="form-label"
+                  style="margin-bottom: 4px; font-weight: 700; color: #1e293b; font-size: 0.76rem;">Purchase Dis
+                  %</label>
+                <input type="number" step="0.1" id="pm-discount-percent" class="form-control-myu" value="25"
+                  placeholder="25" style="font-weight: 700; color: #d97706; padding: 6px 6px; font-size: 0.82rem;">
               </div>
 
               <!-- Field 6: Advance Tax % -->
               <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="margin-bottom: 4px; font-weight: 700; color: #1e293b; font-size: 0.76rem;">Adv Tax %</label>
-                <input type="number" step="0.01" id="pm-advance-tax" class="form-control-myu" value="0" placeholder="0" style="font-weight: 700; color: #6366f1; padding: 6px 6px; font-size: 0.82rem;">
+                <label class="form-label"
+                  style="margin-bottom: 4px; font-weight: 700; color: #1e293b; font-size: 0.76rem;">Adv Tax %</label>
+                <input type="number" step="0.01" id="pm-advance-tax" class="form-control-myu" value="0" placeholder="0"
+                  style="font-weight: 700; color: #6366f1; padding: 6px 6px; font-size: 0.82rem;">
               </div>
 
-              <!-- Field 7: Purchase Unit Cost (NET) -->
+              <!-- Field 7: Default Price (Optional) -->
               <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label required" style="margin-bottom: 4px; font-weight: 700; color: #1e293b; font-size: 0.76rem;">Unit Cost (NET)</label>
-                <input type="number" step="0.01" id="pm-purchase-cost" class="form-control-myu" placeholder="269.24" style="font-weight: 800; color: #0f172a; padding: 6px 6px; font-size: 0.82rem;">
+                <label class="form-label"
+                  style="margin-bottom: 4px; font-weight: 700; color: #1e293b; font-size: 0.76rem;">Default
+                  Price</label>
+                <input type="number" step="0.01" min="0" id="pm-default-price" class="form-control-myu"
+                  placeholder="Optional"
+                  style="font-weight: 700; color: #0f172a; padding: 6px 6px; font-size: 0.82rem;">
               </div>
 
-              <!-- Field 8: Total Net Amount -->
+              <!-- Field 8: Purchase Unit Cost (NET) -->
               <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="margin-bottom: 4px; font-weight: 700; color: #1e293b; font-size: 0.76rem;">Line Net</label>
-                <input type="text" id="pm-total-net" class="form-control-myu" placeholder="0.00" readonly style="font-weight: 800; color: #047857; background: #ecfdf5; border: 1.5px solid #a7f3d0; cursor: not-allowed; padding: 6px 6px; font-size: 0.82rem;" title="Total Net = Purchased Qty × Unit Cost">
+                <label class="form-label required"
+                  style="margin-bottom: 4px; font-weight: 700; color: #1e293b; font-size: 0.76rem;">Unit Cost
+                  (NET)</label>
+                <input type="number" step="0.01" id="pm-purchase-cost" class="form-control-myu" placeholder="269.24"
+                  style="font-weight: 800; color: #0f172a; padding: 6px 6px; font-size: 0.82rem;">
               </div>
 
-              <!-- Field 9: Add Item to Invoice Action Button -->
+              <!-- Field 9: Total Net Amount -->
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label"
+                  style="margin-bottom: 4px; font-weight: 700; color: #1e293b; font-size: 0.76rem;">Line Net</label>
+                <input type="text" id="pm-total-net" class="form-control-myu" placeholder="0.00" readonly
+                  style="font-weight: 800; color: #047857; background: #ecfdf5; border: 1.5px solid #a7f3d0; cursor: not-allowed; padding: 6px 6px; font-size: 0.82rem;"
+                  title="Total Net = Purchased Qty × Unit Cost">
+              </div>
+
+              <!-- Field 10: Add Item to Invoice Action Button -->
               <div class="form-group" id="pm-add-item-col" style="margin-bottom: 0;">
-                <button type="button" id="btn-add-item-to-invoice" class="btn-primary-myu" onclick="productsModule.stageCurrentItem()" style="padding: 7px 14px; height: 35px; font-weight: 700; font-size: 0.82rem; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border: none; box-shadow: 0 2px 6px rgba(2,132,199,0.3); white-space: nowrap; display: flex; align-items: center; gap: 6px;">
+                <button type="button" id="btn-add-item-to-invoice" class="btn-primary-myu"
+                  onclick="productsModule.stageCurrentItem()"
+                  style="padding: 7px 14px; height: 35px; font-weight: 700; font-size: 0.82rem; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border: none; box-shadow: 0 2px 6px rgba(2,132,199,0.3); white-space: nowrap; display: flex; align-items: center; gap: 6px;">
                   <i class="fa-solid fa-plus"></i> + Add Item
                 </button>
               </div>
@@ -1628,14 +1804,20 @@
           </div>
 
           <!-- Section 4: Staged Purchase Invoice Preview Table -->
-          <div id="pm-staged-invoice-section" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 10px; overflow: hidden; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-            <div style="background: #f1f5f9; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #cbd5e1;">
-              <div style="font-weight: 800; font-size: 0.82rem; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+          <div id="pm-staged-invoice-section"
+            style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 10px; overflow: hidden; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+            <div
+              style="background: #f1f5f9; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #cbd5e1;">
+              <div
+                style="font-weight: 800; font-size: 0.82rem; color: #1e293b; display: flex; align-items: center; gap: 8px;">
                 <i class="fa-solid fa-receipt" style="color: var(--primary);"></i>
                 <span>Purchase Invoice Line Items</span>
-                <span id="pm-staged-count-badge" class="badge-status badge-in-stock" style="font-size: 0.72rem; padding: 2px 8px;">0 Items</span>
+                <span id="pm-staged-count-badge" class="badge-status badge-in-stock"
+                  style="font-size: 0.72rem; padding: 2px 8px;">0 Items</span>
               </div>
-              <button type="button" class="btn-sm-myu" onclick="productsModule.clearStagedItems()" style="background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; font-size: 0.72rem; padding: 2px 8px;" title="Clear all staged items">
+              <button type="button" class="btn-sm-myu" onclick="productsModule.clearStagedItems()"
+                style="background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; font-size: 0.72rem; padding: 2px 8px;"
+                title="Clear all staged items">
                 <i class="fa-solid fa-trash-can"></i> Clear List
               </button>
             </div>
@@ -1654,6 +1836,7 @@
                     <th style="padding: 6px 6px; text-align: center;">Bonus</th>
                     <th style="padding: 6px 6px; text-align: center;">Dis%</th>
                     <th style="padding: 6px 6px; text-align: center;">Adv Tax%</th>
+                    <th style="padding: 6px 6px; text-align: right;">Def Price</th>
                     <th style="padding: 6px 6px; text-align: right;">Unit Cost</th>
                     <th style="padding: 6px 6px; text-align: right;">Line Net</th>
                     <th style="padding: 6px 6px; text-align: center; width: 40px;">Action</th>
@@ -1665,7 +1848,8 @@
               </table>
             </div>
             <!-- Invoice Financial Summary Bar -->
-            <div style="background: #f8fafc; border-top: 1.5px solid #cbd5e1; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div
+              style="background: #f8fafc; border-top: 1.5px solid #cbd5e1; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
               <div style="display: flex; gap: 14px; font-size: 0.78rem; color: #475569;">
                 <span>Total Qty: <strong id="pm-summary-total-qty" style="color: #0f172a;">0</strong></span>
                 <span>Gross Subtotal: <strong id="pm-summary-gross" style="color: #0f172a;">Rs. 0.00</strong></span>
@@ -1673,16 +1857,21 @@
                 <span>Adv Tax: <strong id="pm-summary-tax" style="color: #6366f1;">Rs. 0.00</strong></span>
               </div>
               <div style="font-size: 0.9rem; font-weight: 800; color: #047857;">
-                Invoice Net Total: <span id="pm-summary-grand-total" style="font-size: 1.05rem; color: #059669;">Rs. 0.00</span>
+                Invoice Net Total: <span id="pm-summary-grand-total" style="font-size: 1.05rem; color: #059669;">Rs.
+                  0.00</span>
               </div>
             </div>
           </div>
 
           <!-- Section 5: Purchase Payment & Ledger Settlement -->
-          <div id="pm-payment-settlement-section" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; margin-bottom: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
-              <span style="font-size: 0.78rem; font-weight: 800; color: #1e293b; text-transform: uppercase; letter-spacing: 0.6px; display: flex; align-items: center; gap: 6px;">
-                <i class="fa-solid fa-money-check-dollar" style="color: #10b981;"></i> Purchase Payment & Ledger Settlement
+          <div id="pm-payment-settlement-section"
+            style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; margin-bottom: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+            <div
+              style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
+              <span
+                style="font-size: 0.78rem; font-weight: 800; color: #1e293b; text-transform: uppercase; letter-spacing: 0.6px; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-money-check-dollar" style="color: #10b981;"></i> Purchase Payment & Ledger
+                Settlement
               </span>
               <span style="font-size: 0.72rem; color: #64748b;">Supplier Account & Cash / Credit Allocation</span>
             </div>
@@ -1690,53 +1879,76 @@
             <div style="display: grid; grid-template-columns: 1.2fr 2fr 1.5fr; gap: 14px; align-items: center;">
               <!-- Summary 1: Grand Total Payable (Read-only) -->
               <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 8px 12px;">
-                <div style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">Grand Total Payable</div>
-                <div id="pm-pay-grand-total" style="font-size: 1.15rem; font-weight: 800; color: #0f172a;">Rs. 0.00</div>
+                <div
+                  style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">
+                  Grand Total Payable</div>
+                <div id="pm-pay-grand-total" style="font-size: 1.15rem; font-weight: 800; color: #0f172a;">Rs. 0.00
+                </div>
               </div>
 
               <!-- Summary 2: Paid Amount (Input with Quick Shortcuts) -->
               <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 8px 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                  <label for="pm-pay-paid-amount" style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin: 0;">Paid Amount (Rs.)</label>
+                  <label for="pm-pay-paid-amount"
+                    style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin: 0;">Paid
+                    Amount (Rs.)</label>
                   <div style="display: flex; gap: 4px;">
-                    <button type="button" class="btn-sm-myu" onclick="productsModule.setPaymentFull()" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-size: 0.68rem; font-weight: 700; padding: 1px 6px; border-radius: 4px;" title="Set Paid Amount to Grand Total">
+                    <button type="button" class="btn-sm-myu" onclick="productsModule.setPaymentFull()"
+                      style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-size: 0.68rem; font-weight: 700; padding: 1px 6px; border-radius: 4px;"
+                      title="Set Paid Amount to Grand Total">
                       <i class="fa-solid fa-check-double"></i> Full Payment
                     </button>
-                    <button type="button" class="btn-sm-myu" onclick="productsModule.setPaymentUnpaid()" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; font-size: 0.68rem; font-weight: 700; padding: 1px 6px; border-radius: 4px;" title="Set Paid Amount to 0">
+                    <button type="button" class="btn-sm-myu" onclick="productsModule.setPaymentUnpaid()"
+                      style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; font-size: 0.68rem; font-weight: 700; padding: 1px 6px; border-radius: 4px;"
+                      title="Set Paid Amount to 0">
                       <i class="fa-solid fa-hand-holding-hand"></i> Unpaid / Credit
                     </button>
                   </div>
                 </div>
-                <input type="number" step="0.01" min="0" id="pm-pay-paid-amount" class="form-control-myu" value="0" placeholder="0.00" style="font-weight: 800; font-size: 1rem; color: #059669; padding: 4px 8px;" oninput="productsModule.calculatePaymentSettlement()">
+                <input type="number" step="0.01" min="0" id="pm-pay-paid-amount" class="form-control-myu" value="0"
+                  placeholder="0.00" style="font-weight: 800; font-size: 1rem; color: #059669; padding: 4px 8px;"
+                  oninput="productsModule.calculatePaymentSettlement()">
               </div>
 
               <!-- Summary 3: Remaining Balance / Payable (Badge / Box) -->
-              <div id="pm-pay-remaining-card" style="background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 8px; padding: 8px 12px; transition: all 0.2s ease;">
+              <div id="pm-pay-remaining-card"
+                style="background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 8px; padding: 8px 12px; transition: all 0.2s ease;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                  <span style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Remaining Payable</span>
-                  <span id="pm-pay-status-badge" style="font-size: 0.68rem; font-weight: 800; padding: 1px 6px; border-radius: 4px; background: #ef4444; color: #ffffff;">Unpaid / Credit</span>
+                  <span
+                    style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Remaining
+                    Payable</span>
+                  <span id="pm-pay-status-badge"
+                    style="font-size: 0.68rem; font-weight: 800; padding: 1px 6px; border-radius: 4px; background: #ef4444; color: #ffffff;">Unpaid
+                    / Credit</span>
                 </div>
-                <div id="pm-pay-remaining-balance" style="font-size: 1.15rem; font-weight: 800; color: #ef4444;">Rs. 0.00</div>
+                <div id="pm-pay-remaining-balance" style="font-size: 1.15rem; font-weight: 800; color: #ef4444;">Rs.
+                  0.00</div>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Modal Footer Actions -->
-        <div class="modal-footer-myu" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
+        <div class="modal-footer-myu"
+          style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
           <div>
             <button type="button" class="btn-secondary-myu" onclick="app.closeModal('product-modal')">Cancel</button>
           </div>
           <div style="display: flex; gap: 10px;" id="pm-add-mode-actions">
-            <button type="button" class="btn-secondary-myu" id="btn-save-purchase-invoice" onclick="productsModule.savePurchaseInvoice(false)" style="background: #0f172a; color: #ffffff; border: 1px solid #0f172a; font-weight: 700; padding: 8px 16px;">
+            <button type="button" class="btn-secondary-myu" id="btn-save-purchase-invoice"
+              onclick="productsModule.savePurchaseInvoice(false)"
+              style="background: #0f172a; color: #ffffff; border: 1px solid #0f172a; font-weight: 700; padding: 8px 16px;">
               <i class="fa-solid fa-floppy-disk"></i> Save Purchase Invoice
             </button>
-            <button type="button" class="btn-primary-myu" id="btn-save-print-purchase-invoice" onclick="productsModule.savePurchaseInvoice(true)" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); border: none; font-weight: 700; padding: 8px 18px; box-shadow: 0 2px 6px rgba(5,150,105,0.3);">
+            <button type="button" class="btn-primary-myu" id="btn-save-print-purchase-invoice"
+              onclick="productsModule.savePurchaseInvoice(true)"
+              style="background: linear-gradient(135deg, #059669 0%, #047857 100%); border: none; font-weight: 700; padding: 8px 18px; box-shadow: 0 2px 6px rgba(5,150,105,0.3);">
               <i class="fa-solid fa-print"></i> Save & Print Invoice
             </button>
           </div>
           <div style="display: none; gap: 10px;" id="pm-edit-mode-actions">
-            <button type="button" class="btn-primary-myu" id="btn-update-product" onclick="productsModule.saveSingleProductEdit()">
+            <button type="button" class="btn-primary-myu" id="btn-update-product"
+              onclick="productsModule.saveSingleProductEdit()">
               <i class="fa-solid fa-check"></i> Update Product
             </button>
           </div>
@@ -2101,379 +2313,389 @@
   </div>
 
 
-    <!-- ADD EXPENSE MODAL -->
-    <div class="modal-backdrop-myu" id="expense-modal">
-      <div class="modal-box modal-box-md">
-        <div class="modal-header-myu" style="background: linear-gradient(135deg, #0f172a, #e11d48); color: white;">
-          <h3 style="color: white;"><i class="fa-solid fa-receipt"></i> Add Business or Personal Expense</h3>
-          <button class="modal-close-btn" onclick="app.closeModal('expense-modal')"
-            style="color: white;">&times;</button>
-        </div>
-        <form id="expense-form" onsubmit="expensesModule.saveExpenseForm(event)">
-          <div class="modal-body-myu" style="padding: 20px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-              <div class="form-group" style="margin: 0;">
-                <label class="form-label required">Date</label>
-                <input type="date" id="exp-date" class="form-control-myu" required>
-              </div>
-              <div class="form-group" style="margin: 0;">
-                <label class="form-label required">Expense Category</label>
-                <select id="exp-category" class="form-control-myu" required>
-                  <option value="Office Expense">Office Expense</option>
-                  <option value="Home Expense">Home Expense</option>
-                  <option value="Rent & Utilities">Rent & Utilities</option>
-                  <option value="Salaries">Staff Salaries</option>
-                  <option value="Custom Expense">Custom Expense</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label required">Expense Title / Name</label>
-              <input type="text" id="exp-title" class="form-control-myu"
-                placeholder="e.g. Shop Electricity Bill, Tea & Refreshment, Home Grocery" required>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-              <div class="form-group" style="margin: 0;">
-                <label class="form-label required">Expense Amount (Rs.)</label>
-                <input type="number" step="0.01" min="0.01" id="exp-amount" class="form-control-myu"
-                  style="font-weight: 800; font-size: 1.05rem; color: #e11d48;" placeholder="0.00" required>
-              </div>
-              <div class="form-group" style="margin: 0;">
-                <label class="form-label">Payment Method</label>
-                <select id="exp-payment-method" class="form-control-myu">
-                  <option value="Cash">Cash</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                  <option value="Cheque">Cheque</option>
-                  <option value="Online Transfer">Online Transfer</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Notes / Extra Details</label>
-              <textarea id="exp-notes" class="form-control-myu" rows="2" placeholder="Optional details..."></textarea>
-            </div>
-          </div>
-          <div class="modal-footer-myu">
-            <button type="button" class="btn-secondary-myu" onclick="app.closeModal('expense-modal')">Cancel</button>
-            <button type="submit" class="btn-primary-myu" style="background: #e11d48; border: none;"><i
-                class="fa-solid fa-floppy-disk"></i> Save Expense</button>
-          </div>
-        </form>
+  <!-- ADD EXPENSE MODAL -->
+  <div class="modal-backdrop-myu" id="expense-modal">
+    <div class="modal-box modal-box-md">
+      <div class="modal-header-myu" style="background: linear-gradient(135deg, #0f172a, #e11d48); color: white;">
+        <h3 style="color: white;"><i class="fa-solid fa-receipt"></i> Add Business or Personal Expense</h3>
+        <button class="modal-close-btn" onclick="app.closeModal('expense-modal')" style="color: white;">&times;</button>
       </div>
-    </div>
-
-    <!-- RECORD OTHER INCOME MODAL -->
-    <div class="modal-backdrop-myu" id="income-modal">
-      <div class="modal-box modal-box-md">
-        <div class="modal-header-myu" style="background: linear-gradient(135deg, #0f172a, #059669); color: white;">
-          <h3 style="color: white;"><i class="fa-solid fa-plus-circle"></i> Record Other / Manual Income</h3>
-          <button class="modal-close-btn" onclick="app.closeModal('income-modal')"
-            style="color: white;">&times;</button>
-        </div>
-        <form id="income-form" onsubmit="expensesModule.saveIncomeForm(event)">
-          <div class="modal-body-myu" style="padding: 20px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-              <div class="form-group" style="margin: 0;">
-                <label class="form-label required">Date</label>
-                <input type="date" id="inc-date" class="form-control-myu" required>
-              </div>
-              <div class="form-group" style="margin: 0;">
-                <label class="form-label required">Income Category</label>
-                <select id="inc-category" class="form-control-myu" required>
-                  <option value="Other Income">Other Income</option>
-                  <option value="Scrap & Box Sales">Scrap & Box Sales</option>
-                  <option value="Investment / Capital">Investment / Capital</option>
-                  <option value="Custom Income">Custom Income</option>
-                </select>
-              </div>
+      <form id="expense-form" onsubmit="expensesModule.saveExpenseForm(event)">
+        <div class="modal-body-myu" style="padding: 20px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label required">Date</label>
+              <input type="date" id="exp-date" class="form-control-myu" required>
             </div>
-
-            <div class="form-group">
-              <label class="form-label required">Income Title / Description</label>
-              <input type="text" id="inc-title" class="form-control-myu"
-                placeholder="e.g. Cardboard & Waste Packaging Sale" required>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label required">Income Amount (Rs.)</label>
-              <input type="number" step="0.01" min="0.01" id="inc-amount" class="form-control-myu"
-                style="font-weight: 800; font-size: 1.05rem; color: #059669;" placeholder="0.00" required>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Notes / Description</label>
-              <textarea id="inc-notes" class="form-control-myu" rows="2" placeholder="Optional notes..."></textarea>
-            </div>
-          </div>
-          <div class="modal-footer-myu">
-            <button type="button" class="btn-secondary-myu" onclick="app.closeModal('income-modal')">Cancel</button>
-            <button type="submit" class="btn-primary-myu" style="background: #059669; border: none;"><i
-                class="fa-solid fa-floppy-disk"></i> Save Income Record</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-
-    <!-- PROCESS SALES RETURN & REFUND MODAL -->
-    <div class="modal-backdrop-myu" id="return-modal">
-      <div class="modal-box modal-box-lg">
-        <div class="modal-header-myu">
-          <h3><i class="fa-solid fa-rotate-left" style="color: var(--primary);"></i> Process Sales Return & Customer
-            Refund</h3>
-          <button class="modal-close-btn" onclick="app.closeModal('return-modal')">&times;</button>
-        </div>
-        <form id="return-form" onsubmit="event.preventDefault(); salesModule.saveReturnForm();">
-          <div class="modal-body-myu">
-
-            <div class="form-row" style="gap: 12px; align-items: flex-end;">
-              <div class="form-group flex-1" style="margin-bottom: 0;">
-                <label class="form-label" style="display: flex; align-items: center; justify-content: space-between;">
-                  <span><i class="fa-solid fa-magnifying-glass" style="color: var(--primary);"></i> Search Customer / Invoice #</span>
-                  <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">Filters list below</span>
-                </label>
-                <div style="position: relative;">
-                  <input type="text" id="ret-customer-search" class="form-control-myu"
-                    placeholder="Type customer name, shop, or invoice # to search..."
-                    oninput="(window.salesModule && window.salesModule.filterReturnInvoices) ? window.salesModule.filterReturnInvoices(this.value) : (typeof salesModule !== 'undefined' && salesModule.filterReturnInvoices(this.value))"
-                    onfocus="(window.salesModule && window.salesModule.filterReturnInvoices) ? window.salesModule.filterReturnInvoices(this.value) : (typeof salesModule !== 'undefined' && salesModule.filterReturnInvoices(this.value))"
-                    autocomplete="off"
-                    style="padding-left: 36px;">
-                  <i class="fa-solid fa-user-tag" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 0.9rem;"></i>
-                  <div class="search-results-dropdown" id="ret-customer-search-results" style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 10000; max-height: 260px; overflow-y: auto; background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1); display: none;"></div>
-                </div>
-              </div>
-              <div class="form-group" style="width: 200px; margin-bottom: 0;">
-                <label class="form-label required">Return Date</label>
-                <input type="date" id="ret-date" class="form-control-myu" required>
-              </div>
-            </div>
-
-            <div class="form-group" style="margin-top: 12px; margin-bottom: 16px;">
-              <label class="form-label required">Select Original Sale Invoice</label>
-              <select id="ret-sale-select" class="form-control-myu" onchange="salesModule.onReturnInvoiceSelected()"
-                required>
-                <option value="">-- Select Original Invoice --</option>
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label required">Expense Category</label>
+              <select id="exp-category" class="form-control-myu" required>
+                <option value="Office Expense">Office Expense</option>
+                <option value="Home Expense">Home Expense</option>
+                <option value="Rent & Utilities">Rent & Utilities</option>
+                <option value="Salaries">Staff Salaries</option>
+                <option value="Custom Expense">Custom Expense</option>
               </select>
             </div>
-
-            <!-- Customer & Invoice Info Container -->
-            <div id="ret-invoice-summary"
-              style="display: none; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
-              <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-                <div><strong>Customer:</strong> <span id="ret-info-customer">-</span></div>
-                <div><strong>Invoice Date:</strong> <span id="ret-info-date">-</span></div>
-                <div><strong>Originally Net Total:</strong> <span id="ret-info-net"
-                    style="font-weight: 700; color: var(--primary);">-</span></div>
-              </div>
-            </div>
-
-            <!-- Return Products Table -->
-            <div class="form-group">
-              <label class="form-label required">Returned Items & Quantities</label>
-              <div style="overflow-x: auto; max-height: 250px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <table class="custom-table" style="font-size: 0.85rem;">
-                  <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 1;">
-                    <tr>
-                      <th>Product Name</th>
-                      <th>Sold Qty</th>
-                      <th>Prev. Returned</th>
-                      <th>Max Returnable</th>
-                      <th style="width: 110px;">Return Qty</th>
-                      <th>Unit Price</th>
-                      <th>Refund Subtotal</th>
-                    </tr>
-                  </thead>
-                  <tbody id="ret-items-tbody">
-                    <tr>
-                      <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 16px;">
-                        Select an invoice above to view returnable items.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div class="form-row" style="margin-top: 16px;">
-              <div class="form-group flex-1">
-                <label class="form-label required">Refund Payment Method</label>
-                <select id="ret-payment-method" class="form-control-myu" required>
-                  <option value="Cash">Cash Refund</option>
-                  <option value="Credit Adjustment">Credit Balance Adjustment (Deduct from Ledger)</option>
-                  <option value="Bank Transfer">Bank Transfer / Online</option>
-                </select>
-              </div>
-              <div class="form-group flex-1">
-                <label class="form-label required">Return Reason</label>
-                <select id="ret-reason" class="form-control-myu" required>
-                  <option value="Defective / Damaged">Defective / Damaged Medicine</option>
-                  <option value="Expired Product">Expired / Near Expiry</option>
-                  <option value="Customer Returned">Customer Changed Mind / Over-ordered</option>
-                  <option value="Wrong Item Shipped">Wrong Item Shipped</option>
-                  <option value="Other">Other Reason</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Notes / Additional Details</label>
-              <input type="text" id="ret-notes" class="form-control-myu"
-                placeholder="Optional notes regarding return batch, condition, etc...">
-            </div>
-
-            <!-- Overall Refund Summary Banner -->
-            <div
-              style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <span style="font-weight: 700; color: #991b1b; font-size: 0.95rem;">Total Refund Amount to
-                  Customer:</span>
-                <div style="font-size: 0.75rem; color: #7f1d1d;">Inventory stock will be restocked automatically.</div>
-              </div>
-              <div style="font-size: 1.35rem; font-weight: 800; color: #ef4444;" id="ret-total-refund-banner">
-                Rs. 0.00
-              </div>
-            </div>
-
           </div>
-          <div class="modal-footer-myu">
-            <button type="button" class="btn-secondary-myu" onclick="app.closeModal('return-modal')">Cancel</button>
-            <button type="submit" class="btn-primary-myu" style="background: #ef4444; border: none;">
-              <i class="fa-solid fa-rotate-left"></i> Process Return & Restock Stock
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
 
-    <!-- RETURN DETAILS MODAL -->
-    <div class="modal-backdrop-myu" id="return-details-modal">
-      <div class="modal-box modal-box-lg">
-        <div class="modal-header-myu">
-          <h3><i class="fa-solid fa-receipt" style="color: var(--primary);"></i> Return Receipt & Audit Breakdown</h3>
-          <button class="modal-close-btn" onclick="app.closeModal('return-details-modal')">&times;</button>
-        </div>
-        <div class="modal-body-myu" id="return-details-modal-content">
+          <div class="form-group">
+            <label class="form-label required">Expense Title / Name</label>
+            <input type="text" id="exp-title" class="form-control-myu"
+              placeholder="e.g. Shop Electricity Bill, Tea & Refreshment, Home Grocery" required>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label required">Expense Amount (Rs.)</label>
+              <input type="number" step="0.01" min="0.01" id="exp-amount" class="form-control-myu"
+                style="font-weight: 800; font-size: 1.05rem; color: #e11d48;" placeholder="0.00" required>
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label">Payment Method</label>
+              <select id="exp-payment-method" class="form-control-myu">
+                <option value="Cash">Cash</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Cheque">Cheque</option>
+                <option value="Online Transfer">Online Transfer</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notes / Extra Details</label>
+            <textarea id="exp-notes" class="form-control-myu" rows="2" placeholder="Optional details..."></textarea>
+          </div>
         </div>
         <div class="modal-footer-myu">
-          <button class="btn-secondary-myu" onclick="app.closeModal('return-details-modal')">Close</button>
-          <button class="btn-primary-myu" onclick="salesModule.triggerPrintReturnVoucher()"><i class="fa-solid fa-print"></i> Print Return Voucher</button>
+          <button type="button" class="btn-secondary-myu" onclick="app.closeModal('expense-modal')">Cancel</button>
+          <button type="submit" class="btn-primary-myu" style="background: #e11d48; border: none;"><i
+              class="fa-solid fa-floppy-disk"></i> Save Expense</button>
         </div>
-      </div>
+      </form>
     </div>
+  </div>
 
-    <!-- VIEW INVOICE DETAIL & PRINT MODAL -->
-    <div class="modal-backdrop-myu" id="invoice-modal">
-      <div class="modal-box modal-box-lg" style="max-width: 1120px; width: 98%;">
-        <div class="modal-header-myu">
-          <h3>Wholesale Invoice Details</h3>
-          <button class="modal-close-btn" onclick="app.closeModal('invoice-modal')">&times;</button>
-        </div>
-        <div class="modal-body-myu" id="invoice-modal-content" style="padding: 14px 18px; overflow-x: auto;"></div>
-        <div class="modal-footer-myu">
-          <button class="btn-secondary-myu" onclick="app.closeModal('invoice-modal')">Close</button>
-          <button class="btn-primary-myu" id="btn-modal-print-invoice">
-            <i class="fa-solid fa-print"></i> Print Invoice
-          </button>
-        </div>
+  <!-- RECORD OTHER INCOME MODAL -->
+  <div class="modal-backdrop-myu" id="income-modal">
+    <div class="modal-box modal-box-md">
+      <div class="modal-header-myu" style="background: linear-gradient(135deg, #0f172a, #059669); color: white;">
+        <h3 style="color: white;"><i class="fa-solid fa-plus-circle"></i> Record Other / Manual Income</h3>
+        <button class="modal-close-btn" onclick="app.closeModal('income-modal')" style="color: white;">&times;</button>
       </div>
-    </div>
-
-    <!-- VIEW PURCHASE INVOICE DETAILS & PRINT MODAL -->
-    <div class="modal-backdrop-myu" id="view-purchase-modal">
-      <div class="modal-box modal-box-lg" style="max-width: 1050px; width: 96%;">
-        <div class="modal-header-myu">
-          <h3 style="display: flex; align-items: center; gap: 8px;">
-            <i class="fa-solid fa-file-invoice-dollar" style="color: var(--primary);"></i> Purchase Invoice Details
-          </h3>
-          <button class="modal-close-btn" onclick="app.closeModal('view-purchase-modal')">&times;</button>
-        </div>
-        <div class="modal-body-myu" id="view-purchase-modal-content" style="padding: 14px 18px; overflow-x: auto;"></div>
-        <div class="modal-footer-myu">
-          <button type="button" class="btn-secondary-myu" onclick="app.closeModal('view-purchase-modal')">Close</button>
-          <button type="button" class="btn-primary-myu" id="btn-modal-print-purchase">
-            <i class="fa-solid fa-print"></i> Print Purchase Invoice
-          </button>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- NEGATIVE MARGIN & LOSS PREVENTION WARNING MODAL -->
-    <div class="modal-backdrop-myu" id="negative-margin-modal">
-      <div class="modal-box modal-box-lg" style="max-width: 840px;">
-        <div class="modal-header-myu" style="background: #fef2f2; border-bottom: 1.5px solid #fecaca;">
-          <h3 style="color: #991b1b; display: flex; align-items: center; gap: 8px; font-size: 1.15rem; margin: 0;">
-            <i class="fa-solid fa-triangle-exclamation" style="color: #dc2626;"></i> Warning: Below-Cost / Negative Margin Detected
-          </h3>
-          <button class="modal-close-btn" onclick="app.closeModal('negative-margin-modal')">&times;</button>
-        </div>
-        <div class="modal-body-myu" style="padding: 18px 22px;">
-          <div style="background: #fff1f2; border-left: 4px solid #ef4444; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px;">
-            <div style="font-weight: 700; color: #991b1b; font-size: 0.95rem; margin-bottom: 4px;">
-              Loss-Making Line Items Detected in Bill!
+      <form id="income-form" onsubmit="expensesModule.saveIncomeForm(event)">
+        <div class="modal-body-myu" style="padding: 20px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label required">Date</label>
+              <input type="date" id="inc-date" class="form-control-myu" required>
             </div>
-            <div style="font-size: 0.84rem; color: #7f1d1d; line-height: 1.4;">
-              The following medicine(s) are discounted below their <strong>NET Purchase Acquisition Cost</strong>. Completing this sale will result in a negative profit margin on these items:
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label required">Income Category</label>
+              <select id="inc-category" class="form-control-myu" required>
+                <option value="Other Income">Other Income</option>
+                <option value="Scrap & Box Sales">Scrap & Box Sales</option>
+                <option value="Investment / Capital">Investment / Capital</option>
+                <option value="Custom Income">Custom Income</option>
+              </select>
             </div>
           </div>
 
-          <div style="overflow-x: auto; margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 8px;">
-            <table class="custom-table" style="font-size: 0.82rem; width: 100%; margin-bottom: 0;">
-              <thead>
-                <tr style="background: #f8fafc; border-bottom: 1.5px solid #cbd5e1;">
-                  <th style="padding: 8px 6px;">#</th>
-                  <th style="padding: 8px 6px;">Medicine Name</th>
-                  <th style="padding: 8px 6px; text-align: center;">Qty</th>
-                  <th style="padding: 8px 6px; text-align: right;">Trade Price (TP)</th>
-                  <th style="padding: 8px 6px; text-align: right;">Purchase Cost (NET)</th>
-                  <th style="padding: 8px 6px; text-align: center;">Discount %</th>
-                  <th style="padding: 8px 6px; text-align: right;">Billed Net Rate</th>
-                  <th style="padding: 8px 6px; text-align: right; color: #dc2626;">Unit Loss</th>
-                  <th style="padding: 8px 6px; text-align: right; color: #dc2626; font-weight: 800;">Total Loss</th>
-                </tr>
-              </thead>
-              <tbody id="negative-margin-tbody">
-              </tbody>
-            </table>
+          <div class="form-group">
+            <label class="form-label required">Income Title / Description</label>
+            <input type="text" id="inc-title" class="form-control-myu"
+              placeholder="e.g. Cardboard & Waste Packaging Sale" required>
           </div>
 
-          <div id="negative-margin-summary" style="display: flex; justify-content: space-between; align-items: center; background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 8px; padding: 12px 18px;">
-            <span style="font-weight: 700; color: #991b1b; font-size: 0.95rem;">Total Projected Invoice Loss:</span>
-            <span id="negative-margin-total-loss" style="font-weight: 900; font-size: 1.18rem; color: #dc2626;">-Rs. 0.00</span>
+          <div class="form-group">
+            <label class="form-label required">Income Amount (Rs.)</label>
+            <input type="number" step="0.01" min="0.01" id="inc-amount" class="form-control-myu"
+              style="font-weight: 800; font-size: 1.05rem; color: #059669;" placeholder="0.00" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notes / Description</label>
+            <textarea id="inc-notes" class="form-control-myu" rows="2" placeholder="Optional notes..."></textarea>
           </div>
         </div>
-        <div class="modal-footer-myu" style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 12px 20px;">
-          <button type="button" class="btn-secondary-myu" onclick="billingModule.cancelAndAdjustDiscounts()" style="padding: 10px 18px; font-weight: 600;">
-            <i class="fa-solid fa-arrow-left"></i> Adjust Discounts
-          </button>
-          <button type="button" class="btn-danger-myu" onclick="billingModule.confirmAndApproveLossSale()" style="padding: 10px 20px; font-weight: 700; background: #dc2626; border-color: #dc2626; color: #ffffff;">
-            <i class="fa-solid fa-triangle-exclamation"></i> Proceed & Approve Loss
-          </button>
+        <div class="modal-footer-myu">
+          <button type="button" class="btn-secondary-myu" onclick="app.closeModal('income-modal')">Cancel</button>
+          <button type="submit" class="btn-primary-myu" style="background: #059669; border: none;"><i
+              class="fa-solid fa-floppy-disk"></i> Save Income Record</button>
         </div>
-      </div>
+      </form>
     </div>
+  </div>
 
 
-    <!-- DELETE CONFIRMATION MODAL -->
-    <div class="modal-backdrop-myu" id="delete-confirm-modal">
-      <div class="modal-box" style="max-width: 420px; text-align: center;">
-        <div class="modal-body-myu" style="padding: 30px 20px;">
-          <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: #ef4444; margin-bottom: 14px;"></i>
-          <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 8px;">Confirm Delete</h3>
-          <p style="color: var(--text-muted); font-size: 0.9rem;" id="delete-modal-msg">
-            Are you sure you want to delete this record? This action cannot be undone.
-          </p>
+  <!-- PROCESS SALES RETURN & REFUND MODAL -->
+  <div class="modal-backdrop-myu" id="return-modal">
+    <div class="modal-box modal-box-lg">
+      <div class="modal-header-myu">
+        <h3><i class="fa-solid fa-rotate-left" style="color: var(--primary);"></i> Process Sales Return & Customer
+          Refund</h3>
+        <button class="modal-close-btn" onclick="app.closeModal('return-modal')">&times;</button>
+      </div>
+      <form id="return-form" onsubmit="event.preventDefault(); salesModule.saveReturnForm();">
+        <div class="modal-body-myu">
+
+          <div class="form-row" style="gap: 12px; align-items: flex-end;">
+            <div class="form-group flex-1" style="margin-bottom: 0;">
+              <label class="form-label" style="display: flex; align-items: center; justify-content: space-between;">
+                <span><i class="fa-solid fa-magnifying-glass" style="color: var(--primary);"></i> Search Customer /
+                  Invoice #</span>
+                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">Filters list below</span>
+              </label>
+              <div style="position: relative;">
+                <input type="text" id="ret-customer-search" class="form-control-myu"
+                  placeholder="Type customer name, shop, or invoice # to search..."
+                  oninput="(window.salesModule && window.salesModule.filterReturnInvoices) ? window.salesModule.filterReturnInvoices(this.value) : (typeof salesModule !== 'undefined' && salesModule.filterReturnInvoices(this.value))"
+                  onfocus="(window.salesModule && window.salesModule.filterReturnInvoices) ? window.salesModule.filterReturnInvoices(this.value) : (typeof salesModule !== 'undefined' && salesModule.filterReturnInvoices(this.value))"
+                  autocomplete="off" style="padding-left: 36px;">
+                <i class="fa-solid fa-user-tag"
+                  style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 0.9rem;"></i>
+                <div class="search-results-dropdown" id="ret-customer-search-results"
+                  style="position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 10000; max-height: 260px; overflow-y: auto; background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1); display: none;">
+                </div>
+              </div>
+            </div>
+            <div class="form-group" style="width: 200px; margin-bottom: 0;">
+              <label class="form-label required">Return Date</label>
+              <input type="date" id="ret-date" class="form-control-myu" required>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 12px; margin-bottom: 16px;">
+            <label class="form-label required">Select Original Sale Invoice</label>
+            <select id="ret-sale-select" class="form-control-myu" onchange="salesModule.onReturnInvoiceSelected()"
+              required>
+              <option value="">-- Select Original Invoice --</option>
+            </select>
+          </div>
+
+          <!-- Customer & Invoice Info Container -->
+          <div id="ret-invoice-summary"
+            style="display: none; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+              <div><strong>Customer:</strong> <span id="ret-info-customer">-</span></div>
+              <div><strong>Invoice Date:</strong> <span id="ret-info-date">-</span></div>
+              <div><strong>Originally Net Total:</strong> <span id="ret-info-net"
+                  style="font-weight: 700; color: var(--primary);">-</span></div>
+            </div>
+          </div>
+
+          <!-- Return Products Table -->
+          <div class="form-group">
+            <label class="form-label required">Returned Items & Quantities</label>
+            <div style="overflow-x: auto; max-height: 250px; border: 1px solid #e2e8f0; border-radius: 8px;">
+              <table class="custom-table" style="font-size: 0.85rem;">
+                <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 1;">
+                  <tr>
+                    <th>Product Name</th>
+                    <th>Sold Qty</th>
+                    <th>Prev. Returned</th>
+                    <th>Max Returnable</th>
+                    <th style="width: 110px;">Return Qty</th>
+                    <th>Unit Price</th>
+                    <th>Refund Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody id="ret-items-tbody">
+                  <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 16px;">
+                      Select an invoice above to view returnable items.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-top: 16px;">
+            <div class="form-group flex-1">
+              <label class="form-label required">Refund Payment Method</label>
+              <select id="ret-payment-method" class="form-control-myu" required>
+                <option value="Cash">Cash Refund</option>
+                <option value="Credit Adjustment">Credit Balance Adjustment (Deduct from Ledger)</option>
+                <option value="Bank Transfer">Bank Transfer / Online</option>
+              </select>
+            </div>
+            <div class="form-group flex-1">
+              <label class="form-label required">Return Reason</label>
+              <select id="ret-reason" class="form-control-myu" required>
+                <option value="Defective / Damaged">Defective / Damaged Medicine</option>
+                <option value="Expired Product">Expired / Near Expiry</option>
+                <option value="Customer Returned">Customer Changed Mind / Over-ordered</option>
+                <option value="Wrong Item Shipped">Wrong Item Shipped</option>
+                <option value="Other">Other Reason</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notes / Additional Details</label>
+            <input type="text" id="ret-notes" class="form-control-myu"
+              placeholder="Optional notes regarding return batch, condition, etc...">
+          </div>
+
+          <!-- Overall Refund Summary Banner -->
+          <div
+            style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <span style="font-weight: 700; color: #991b1b; font-size: 0.95rem;">Total Refund Amount to
+                Customer:</span>
+              <div style="font-size: 0.75rem; color: #7f1d1d;">Inventory stock will be restocked automatically.</div>
+            </div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: #ef4444;" id="ret-total-refund-banner">
+              Rs. 0.00
+            </div>
+          </div>
+
         </div>
-        <div class="modal-footer-myu" style="justify-content: center;">
-          <button class="btn-secondary-myu" onclick="app.closeModal('delete-confirm-modal')">Cancel</button>
-          <button class="btn-danger-myu" id="btn-confirm-delete-action">Delete Record</button>
+        <div class="modal-footer-myu">
+          <button type="button" class="btn-secondary-myu" onclick="app.closeModal('return-modal')">Cancel</button>
+          <button type="submit" class="btn-primary-myu" style="background: #ef4444; border: none;">
+            <i class="fa-solid fa-rotate-left"></i> Process Return & Restock Stock
+          </button>
         </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- RETURN DETAILS MODAL -->
+  <div class="modal-backdrop-myu" id="return-details-modal">
+    <div class="modal-box modal-box-lg">
+      <div class="modal-header-myu">
+        <h3><i class="fa-solid fa-receipt" style="color: var(--primary);"></i> Return Receipt & Audit Breakdown</h3>
+        <button class="modal-close-btn" onclick="app.closeModal('return-details-modal')">&times;</button>
+      </div>
+      <div class="modal-body-myu" id="return-details-modal-content">
+      </div>
+      <div class="modal-footer-myu">
+        <button class="btn-secondary-myu" onclick="app.closeModal('return-details-modal')">Close</button>
+        <button class="btn-primary-myu" onclick="salesModule.triggerPrintReturnVoucher()"><i
+            class="fa-solid fa-print"></i> Print Return Voucher</button>
       </div>
     </div>
+  </div>
+
+  <!-- VIEW INVOICE DETAIL & PRINT MODAL -->
+  <div class="modal-backdrop-myu" id="invoice-modal">
+    <div class="modal-box modal-box-lg" style="max-width: 1120px; width: 98%;">
+      <div class="modal-header-myu">
+        <h3>Wholesale Invoice Details</h3>
+        <button class="modal-close-btn" onclick="app.closeModal('invoice-modal')">&times;</button>
+      </div>
+      <div class="modal-body-myu" id="invoice-modal-content" style="padding: 14px 18px; overflow-x: auto;"></div>
+      <div class="modal-footer-myu">
+        <button class="btn-secondary-myu" onclick="app.closeModal('invoice-modal')">Close</button>
+        <button class="btn-primary-myu" id="btn-modal-print-invoice">
+          <i class="fa-solid fa-print"></i> Print Invoice
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW PURCHASE INVOICE DETAILS & PRINT MODAL -->
+  <div class="modal-backdrop-myu" id="view-purchase-modal">
+    <div class="modal-box modal-box-lg" style="max-width: 1050px; width: 96%;">
+      <div class="modal-header-myu">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-file-invoice-dollar" style="color: var(--primary);"></i> Purchase Invoice Details
+        </h3>
+        <button class="modal-close-btn" onclick="app.closeModal('view-purchase-modal')">&times;</button>
+      </div>
+      <div class="modal-body-myu" id="view-purchase-modal-content" style="padding: 14px 18px; overflow-x: auto;"></div>
+      <div class="modal-footer-myu">
+        <button type="button" class="btn-secondary-myu" onclick="app.closeModal('view-purchase-modal')">Close</button>
+        <button type="button" class="btn-primary-myu" id="btn-modal-print-purchase">
+          <i class="fa-solid fa-print"></i> Print Purchase Invoice
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- NEGATIVE MARGIN & LOSS PREVENTION WARNING MODAL -->
+  <div class="modal-backdrop-myu" id="negative-margin-modal">
+    <div class="modal-box modal-box-lg" style="max-width: 840px;">
+      <div class="modal-header-myu" style="background: #fef2f2; border-bottom: 1.5px solid #fecaca;">
+        <h3 style="color: #991b1b; display: flex; align-items: center; gap: 8px; font-size: 1.15rem; margin: 0;">
+          <i class="fa-solid fa-triangle-exclamation" style="color: #dc2626;"></i> Warning: Below-Cost / Negative Margin
+          Detected
+        </h3>
+        <button class="modal-close-btn" onclick="app.closeModal('negative-margin-modal')">&times;</button>
+      </div>
+      <div class="modal-body-myu" style="padding: 18px 22px;">
+        <div
+          style="background: #fff1f2; border-left: 4px solid #ef4444; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px;">
+          <div style="font-weight: 700; color: #991b1b; font-size: 0.95rem; margin-bottom: 4px;">
+            Loss-Making Line Items Detected in Bill!
+          </div>
+          <div style="font-size: 0.84rem; color: #7f1d1d; line-height: 1.4;">
+            The following medicine(s) are discounted below their <strong>NET Purchase Acquisition Cost</strong>.
+            Completing this sale will result in a negative profit margin on these items:
+          </div>
+        </div>
+
+        <div style="overflow-x: auto; margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 8px;">
+          <table class="custom-table" style="font-size: 0.82rem; width: 100%; margin-bottom: 0;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 1.5px solid #cbd5e1;">
+                <th style="padding: 8px 6px;">#</th>
+                <th style="padding: 8px 6px;">Medicine Name</th>
+                <th style="padding: 8px 6px; text-align: center;">Qty</th>
+                <th style="padding: 8px 6px; text-align: right;">Trade Price (TP)</th>
+                <th style="padding: 8px 6px; text-align: right;">Purchase Cost (NET)</th>
+                <th style="padding: 8px 6px; text-align: center;">Discount %</th>
+                <th style="padding: 8px 6px; text-align: right;">Billed Net Rate</th>
+                <th style="padding: 8px 6px; text-align: right; color: #dc2626;">Unit Loss</th>
+                <th style="padding: 8px 6px; text-align: right; color: #dc2626; font-weight: 800;">Total Loss</th>
+              </tr>
+            </thead>
+            <tbody id="negative-margin-tbody">
+            </tbody>
+          </table>
+        </div>
+
+        <div id="negative-margin-summary"
+          style="display: flex; justify-content: space-between; align-items: center; background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 8px; padding: 12px 18px;">
+          <span style="font-weight: 700; color: #991b1b; font-size: 0.95rem;">Total Projected Invoice Loss:</span>
+          <span id="negative-margin-total-loss" style="font-weight: 900; font-size: 1.18rem; color: #dc2626;">-Rs.
+            0.00</span>
+        </div>
+      </div>
+      <div class="modal-footer-myu"
+        style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 12px 20px;">
+        <button type="button" class="btn-secondary-myu" onclick="billingModule.cancelAndAdjustDiscounts()"
+          style="padding: 10px 18px; font-weight: 600;">
+          <i class="fa-solid fa-arrow-left"></i> Adjust Discounts
+        </button>
+        <button type="button" class="btn-danger-myu" onclick="billingModule.confirmAndApproveLossSale()"
+          style="padding: 10px 20px; font-weight: 700; background: #dc2626; border-color: #dc2626; color: #ffffff;">
+          <i class="fa-solid fa-triangle-exclamation"></i> Proceed & Approve Loss
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- DELETE CONFIRMATION MODAL -->
+  <div class="modal-backdrop-myu" id="delete-confirm-modal">
+    <div class="modal-box" style="max-width: 420px; text-align: center;">
+      <div class="modal-body-myu" style="padding: 30px 20px;">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: #ef4444; margin-bottom: 14px;"></i>
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 8px;">Confirm Delete</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;" id="delete-modal-msg">
+          Are you sure you want to delete this record? This action cannot be undone.
+        </p>
+      </div>
+      <div class="modal-footer-myu" style="justify-content: center;">
+        <button class="btn-secondary-myu" onclick="app.closeModal('delete-confirm-modal')">Cancel</button>
+        <button class="btn-danger-myu" id="btn-confirm-delete-action">Delete Record</button>
+      </div>
+    </div>
+  </div>
   </div><!-- /#app-container -->
 
 
@@ -2484,7 +2706,7 @@
   <div id="toast-container"></div>
 
 
-    <!-- ==========================================================================
+  <!-- ==========================================================================
      CONSOLIDATED JAVASCRIPT APPLICATION CODE
      ========================================================================== -->
 

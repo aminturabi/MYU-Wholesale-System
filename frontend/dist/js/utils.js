@@ -73,6 +73,7 @@ const Utils = {
           const bns = Math.max(0, parseInt(bonus) || 0);
           const p = Math.max(0, parseFloat(price) || 0);
           const tradePrice = Math.max(0, parseFloat(tp) || p || 0);
+          const effectivePrice = (p > 0) ? p : tradePrice;
           let unitCost = Math.max(0, parseFloat(purchaseCost) || 0);
           let purDisc = Math.max(0, parseFloat(purchaseDiscount) || 0);
 
@@ -90,13 +91,13 @@ const Utils = {
           const tax = Math.max(0, parseFloat(taxPercent) || 0);
 
           // 1. Calculate per-unit discounts (Cascade) & Tax on Taxable Base
-          const unitDiscount = (tradePrice * dis) / 100;
-          const unitExtDiscount = ((tradePrice - unitDiscount) * ext) / 100;
+          const unitDiscount = (effectivePrice * dis) / 100;
+          const unitExtDiscount = ((effectivePrice - unitDiscount) * ext) / 100;
           const totalUnitDiscount = unitDiscount + unitExtDiscount;
-          const billedNetRate = tradePrice - totalUnitDiscount;
+          const billedNetRate = effectivePrice - totalUnitDiscount;
 
           // 2. Financial Line Totals (Billed strictly on paid 'qty', NOT 'totalQty')
-          const lineGross = Utils.round(q * tradePrice, 2);                               // Excludes bonus from gross bill
+          const lineGross = Utils.round(q * effectivePrice, 2);                               // Excludes bonus from gross bill
           const disAmount = Utils.round(q * unitDiscount, 2);
           const extAmount = Utils.round(q * unitExtDiscount, 2);
           const totalDiscountAmount = Utils.round(q * totalUnitDiscount, 2);              // Applies discount to paid qty
@@ -108,12 +109,13 @@ const Utils = {
 
           // 3. Inventory & COGS Tracking
           const totalQty = q + bns;
-          const marginPercent = Utils.round(purDisc - (dis + ext), 2);
-          const lineProfit = Utils.round(lineAmount * (marginPercent / 100), 2);
-          const lineCogs = Utils.round(lineAmount - lineProfit, 2);
+          const totalCogs = Utils.round(totalQty * unitCost, 2);
+          const lineProfit = Utils.round(lineAmount - totalCogs, 2);
+          const lineCogs = totalCogs;
+          const marginPercent = lineAmount > 0 ? Utils.round((lineProfit / lineAmount) * 100, 2) : 0;
           const unitProfit = q > 0 ? Utils.round(lineProfit / q, 4) : 0;
           const purchaseDiscountPercent = purDisc;
-          const effectiveSaleDiscountPercent = tradePrice > 0 ? Utils.round((totalUnitDiscount / tradePrice) * 100, 2) : 0;
+          const effectiveSaleDiscountPercent = effectivePrice > 0 ? Utils.round((totalUnitDiscount / effectivePrice) * 100, 2) : 0;
           const realizedMarginPercent = marginPercent;
 
           return {

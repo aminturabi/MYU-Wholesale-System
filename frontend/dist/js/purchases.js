@@ -52,6 +52,7 @@ class PurchasesModule {
               Utils.populateSelect(select, companies || [], 'id', c => `${c.name} (${c.contactPerson || 'No Contact'})`, '', '-- Select Company / Supplier --');
             }
 
+            this.defaultTaxRate = 0;
             this.lineItems = [];
             this.addPurchaseLineItem();
             this.calculatePurchaseTotals();
@@ -61,8 +62,42 @@ class PurchasesModule {
         }
 
         addPurchaseLineItem() {
-          this.lineItems.push({ productId: '', itemNo: '', name: '', batchNumber: '', expiryDate: '', quantity: 1, bonus: 0, tp: 0, discountPercent: 0, totalAmount: 0 });
+          this.lineItems.push({
+            productId: '',
+            itemNo: '',
+            name: '',
+            batchNumber: '',
+            expiryDate: '',
+            quantity: 1,
+            bonus: 0,
+            tp: 0,
+            discountPercent: 0,
+            taxPercent: this.defaultTaxRate || 0,
+            taxAmount: 0,
+            totalAmount: 0
+          });
           this.renderPurchaseLineItemsTable();
+        }
+
+        openAdvanceTaxModal() {
+          const current = (this.defaultTaxRate !== undefined && this.defaultTaxRate !== 0) ? this.defaultTaxRate : '';
+          const val = prompt('Enter Advance Tax Rate (%) for this purchase invoice:', current || '0.5');
+          if (val === null) return;
+          const rate = Math.max(0, parseFloat(val) || 0);
+          this.defaultTaxRate = rate;
+
+          this.lineItems.forEach((item, idx) => {
+            item.taxPercent = rate;
+            this.updateLineCalculations(idx);
+          });
+
+          this.renderPurchaseLineItemsTable();
+          this.calculatePurchaseTotals();
+
+          const appObj = window.app || (typeof app !== 'undefined' ? app : null);
+          if (appObj && typeof appObj.showToast === 'function') {
+            appObj.showToast(rate > 0 ? `Advance Tax (${rate}%) applied to purchase items!` : `Advance Tax set to 0%`, 'success');
+          }
         }
 
         onNewProductAdded(newProduct) {
@@ -75,7 +110,20 @@ class PurchasesModule {
           }
           let emptyIdx = this.lineItems.findIndex(i => !i.productId);
           if (emptyIdx === -1) {
-            this.lineItems.push({ productId: '', itemNo: '', name: '', batchNumber: '', expiryDate: '', quantity: 1, bonus: 0, tp: 0, discountPercent: 0, totalAmount: 0 });
+            this.lineItems.push({
+              productId: '',
+              itemNo: '',
+              name: '',
+              batchNumber: '',
+              expiryDate: '',
+              quantity: 1,
+              bonus: 0,
+              tp: 0,
+              discountPercent: 0,
+              taxPercent: this.defaultTaxRate || 0,
+              taxAmount: 0,
+              totalAmount: 0
+            });
             emptyIdx = this.lineItems.length - 1;
           }
           this.onProductSelectChange(emptyIdx, newProduct.id);
@@ -103,16 +151,18 @@ class PurchasesModule {
             });
 
             const lineTotalFormatted = (item.totalAmount !== undefined && !isNaN(item.totalAmount)) ? Number(item.totalAmount).toFixed(2) : '0.00';
+            const taxVal = item.taxPercent !== undefined ? item.taxPercent : (item.tax || 0);
 
             html += `
             <tr>
-              <td><select class="form-control-myu" style="padding: 8px 10px; font-weight: 500; min-width: 260px;" onchange="purchasesModule.onProductSelectChange(${idx}, this.value)">${prodOptions}</select></td>
-              <td><input type="text" class="form-control-myu" style="padding: 8px 10px; text-align: center;" value="${item.batchNumber || ''}" oninput="purchasesModule.updateLineItem(${idx}, 'batchNumber', this.value)" onchange="purchasesModule.updateLineItem(${idx}, 'batchNumber', this.value)"></td>
-              <td><input type="date" class="form-control-myu" style="padding: 8px 6px; text-align: center;" value="${item.expiryDate || ''}" oninput="purchasesModule.updateLineItem(${idx}, 'expiryDate', this.value)" onchange="purchasesModule.updateLineItem(${idx}, 'expiryDate', this.value)"></td>
-              <td><input type="number" class="form-control-myu pur-qty-input" style="padding: 8px 8px; text-align: center;" value="${item.quantity}" min="1" oninput="purchasesModule.updateLineItem(${idx}, 'quantity', this.value)" onchange="purchasesModule.updateLineItem(${idx}, 'quantity', this.value)"></td>
-              <td><input type="number" class="form-control-myu pur-bonus-input" style="padding: 8px 8px; text-align: center;" value="${item.bonus || 0}" min="0" oninput="purchasesModule.updateLineItem(${idx}, 'bonus', this.value)" onchange="purchasesModule.updateLineItem(${idx}, 'bonus', this.value)"></td>
-              <td><input type="number" step="0.01" class="form-control-myu pur-tp-input" style="padding: 8px 8px; text-align: center; font-weight: 600;" value="${item.tp || 0}" oninput="purchasesModule.updateLineItem(${idx}, 'tp', this.value)" onchange="purchasesModule.updateLineItem(${idx}, 'tp', this.value)"></td>
-              <td><input type="number" step="0.1" class="form-control-myu pur-disc-input" style="padding: 8px 8px; text-align: center;" value="${item.discountPercent || 0}" oninput="purchasesModule.updateLineItem(${idx}, 'discountPercent', this.value)" onchange="purchasesModule.updateLineItem(${idx}, 'discountPercent', this.value)"></td>
+              <td><select class="form-control-myu" style="padding: 8px 10px; font-weight: 500; min-width: 250px;" onchange="purchasesModule.onProductSelectChange(${idx}, this.value)">${prodOptions}</select></td>
+              <td><input type="text" class="form-control-myu" style="padding: 8px 8px; text-align: center;" value="${item.batchNumber || ''}" oninput="purchasesModule.updateLineItem(${idx}, 'batchNumber', this.value)" onchange="purchasesModule.updateLineItem(${idx}, 'batchNumber', this.value)"></td>
+              <td><input type="date" class="form-control-myu" style="padding: 8px 4px; text-align: center;" value="${item.expiryDate || ''}" oninput="purchasesModule.updateLineItem(${idx}, 'expiryDate', this.value)" onchange="purchasesModule.updateLineItem(${idx}, 'expiryDate', this.value)"></td>
+              <td><input type="number" class="form-control-myu pur-qty-input" style="padding: 8px 6px; text-align: center;" value="${item.quantity}" min="1" oninput="purchasesModule.updateLineItem(${idx}, 'quantity', this.value)" onchange="purchasesModule.updateLineItem(${idx}, 'quantity', this.value)"></td>
+              <td><input type="number" class="form-control-myu pur-bonus-input" style="padding: 8px 6px; text-align: center;" value="${item.bonus || 0}" min="0" oninput="purchasesModule.updateLineItem(${idx}, 'bonus', this.value)" onchange="purchasesModule.updateLineItem(${idx}, 'bonus', this.value)"></td>
+              <td><input type="number" step="0.01" class="form-control-myu pur-tp-input" style="padding: 8px 6px; text-align: center; font-weight: 600;" value="${item.tp || 0}" oninput="purchasesModule.updateLineItem(${idx}, 'tp', this.value)" onchange="purchasesModule.updateLineItem(${idx}, 'tp', this.value)"></td>
+              <td><input type="number" step="0.1" class="form-control-myu pur-disc-input" style="padding: 8px 6px; text-align: center;" value="${item.discountPercent || 0}" oninput="purchasesModule.updateLineItem(${idx}, 'discountPercent', this.value)" onchange="purchasesModule.updateLineItem(${idx}, 'discountPercent', this.value)"></td>
+              <td><input type="number" step="0.01" min="0" class="form-control-myu pur-tax-input" style="padding: 8px 6px; text-align: center;" value="${taxVal}" oninput="purchasesModule.updateLineItem(${idx}, 'taxPercent', this.value)" onchange="purchasesModule.updateLineItem(${idx}, 'taxPercent', this.value)"></td>
               <td id="pur-line-total-${idx}" class="pur-line-total" style="font-weight: 700; color: var(--primary); text-align: right; white-space: nowrap;">Rs. ${lineTotalFormatted}</td>
               <td style="text-align: center;"><button type="button" class="btn-danger-myu btn-sm-myu" onclick="purchasesModule.removePurchaseLineItem(${idx})"><i class="fa-solid fa-trash"></i></button></td>
             </tr>
@@ -129,12 +179,15 @@ class PurchasesModule {
             this.lineItems[index].name = prod.name;
             this.lineItems[index].batchNumber = prod.batchNumber || '';
             this.lineItems[index].expiryDate = prod.expiryDate || '';
-            this.lineItems[index].tp = parseFloat(prod.tp) || 0;
-            this.lineItems[index].discountPercent = parseFloat(prod.discount) || 0;
+            this.lineItems[index].tp = parseFloat(prod.tradePrice !== undefined ? prod.tradePrice : prod.tp) || 0;
+            this.lineItems[index].discountPercent = parseFloat(prod.purchaseDiscount !== undefined ? prod.purchaseDiscount : (prod.discount !== undefined ? prod.discount : 0)) || 0;
+            const prodTax = parseFloat(prod.advanceTax !== undefined ? prod.advanceTax : (prod.taxPercent !== undefined ? prod.taxPercent : (prod.tax || 0))) || 0;
+            this.lineItems[index].taxPercent = (this.defaultTaxRate > 0) ? this.defaultTaxRate : prodTax;
           } else {
             this.lineItems[index].productId = '';
             this.lineItems[index].itemNo = '';
             this.lineItems[index].name = '';
+            this.lineItems[index].taxPercent = this.defaultTaxRate || 0;
           }
           this.updateLineCalculations(index);
           this.renderPurchaseLineItemsTable();
@@ -155,7 +208,17 @@ class PurchasesModule {
           const qty = parseInt(item.quantity) || 0;
           const tp = parseFloat(item.tp) || 0;
           const disc = parseFloat(item.discountPercent) || 0;
-          item.totalAmount = Utils.calcLineTotal(qty, tp, disc);
+          const tax = parseFloat(item.taxPercent !== undefined ? item.taxPercent : (item.tax || 0)) || 0;
+
+          const gross = Utils.round(qty * tp);
+          const lineDisc = Utils.round((gross * disc) / 100);
+          const taxableBase = Utils.round(gross - lineDisc);
+          const lineTax = Utils.round((taxableBase * tax) / 100);
+          const totalAmount = Math.max(0, Utils.round(taxableBase + lineTax));
+
+          item.taxAmount = lineTax;
+          item.taxPercent = tax;
+          item.totalAmount = totalAmount;
         }
 
         updateRowDom(index) {
@@ -168,7 +231,7 @@ class PurchasesModule {
           } else {
             const tbody = document.getElementById('pur-items-tbody');
             if (tbody && tbody.children[index]) {
-              const totalTd = tbody.children[index].querySelector('.pur-line-total') || tbody.children[index].children[7];
+              const totalTd = tbody.children[index].querySelector('.pur-line-total') || tbody.children[index].children[8];
               if (totalTd) {
                 totalTd.textContent = `Rs. ${formatted}`;
               }
@@ -177,18 +240,24 @@ class PurchasesModule {
         }
 
         calculatePurchaseTotals() {
-          let subtotal = 0, totalDiscount = 0;
+          let subtotal = 0, totalDiscount = 0, totalTax = 0;
           this.lineItems.forEach(item => {
             const qty = parseInt(item.quantity) || 0;
             const tp = parseFloat(item.tp) || 0;
             const disc = parseFloat(item.discountPercent) || 0;
+            const tax = parseFloat(item.taxPercent !== undefined ? item.taxPercent : (item.tax || 0)) || 0;
+
             const gross = Utils.round(qty * tp);
             const lineDisc = Utils.round((gross * disc) / 100);
+            const taxableBase = Utils.round(gross - lineDisc);
+            const lineTax = Utils.round((taxableBase * tax) / 100);
+
             subtotal = Utils.round(subtotal + gross);
             totalDiscount = Utils.round(totalDiscount + lineDisc);
+            totalTax = Utils.round(totalTax + lineTax);
           });
 
-          const grandTotal = Utils.round(subtotal - totalDiscount);
+          const grandTotal = Math.max(0, Utils.round(subtotal - totalDiscount + totalTax));
           const paidInput = document.getElementById('pur-paid-amount');
           const paid = paidInput ? (parseFloat(paidInput.value) || 0) : 0;
           const remaining = Math.max(0, Utils.round(grandTotal - paid));
@@ -198,6 +267,8 @@ class PurchasesModule {
           if (subElem) subElem.textContent = Utils.formatCurrency(subtotal, settings.currency);
           const discElem = document.getElementById('pur-total-disc');
           if (discElem) discElem.textContent = Utils.formatCurrency(totalDiscount, settings.currency);
+          const taxElem = document.getElementById('pur-total-tax');
+          if (taxElem) taxElem.textContent = Utils.formatCurrency(totalTax, settings.currency);
           const grandElem = document.getElementById('pur-grand-total');
           if (grandElem) grandElem.textContent = Utils.formatCurrency(grandTotal, settings.currency);
           const remElem = document.getElementById('pur-remaining-amount');
@@ -212,30 +283,46 @@ class PurchasesModule {
           if (!validItems.length) { app.showToast('Please select at least one valid product.', 'warning'); return; }
 
           const comp = storage.getCompanies().find(c => c.id === compId);
-          let subtotal = 0, totalDiscount = 0;
+          let subtotal = 0, totalDiscount = 0, totalTax = 0;
           const formattedItems = validItems.map(i => {
             const qty = parseInt(i.quantity) || 0;
             const bonus = parseInt(i.bonus) || 0;
             const tp = Utils.round(parseFloat(i.tp) || 0);
             const disc = Utils.round(parseFloat(i.discountPercent) || 0);
+            const tax = Utils.round(parseFloat(i.taxPercent !== undefined ? i.taxPercent : (i.tax || 0)));
+
             const gross = Utils.round(qty * tp);
             const lineDisc = Utils.round((gross * disc) / 100);
-            const totalAmount = Utils.calcLineTotal(qty, tp, disc);
+            const taxableBase = Utils.round(gross - lineDisc);
+            const lineTax = Utils.round((taxableBase * tax) / 100);
+            const totalAmount = Math.max(0, Utils.round(taxableBase + lineTax));
+            const unitNet = qty > 0 ? Utils.round(totalAmount / qty, 4) : tp;
 
             subtotal = Utils.round(subtotal + gross);
             totalDiscount = Utils.round(totalDiscount + lineDisc);
+            totalTax = Utils.round(totalTax + lineTax);
 
             return {
               ...i,
               quantity: qty,
               bonus: bonus,
               tp: tp,
+              tradePrice: tp,
               discountPercent: disc,
+              purchaseDiscountPercent: disc,
+              purchaseDiscount: disc,
+              discount: disc,
+              taxPercent: tax,
+              tax: tax,
+              advTax: tax,
+              taxAmount: lineTax,
+              netPrice: unitNet,
+              purchaseCost: unitNet,
               totalAmount: totalAmount
             };
           });
 
-          const grandTotal = Utils.round(subtotal - totalDiscount);
+          const grandTotal = Math.max(0, Utils.round(subtotal - totalDiscount + totalTax));
           const paid = Utils.round(parseFloat(document.getElementById('pur-paid-amount').value) || 0);
           const remaining = Math.max(0, Utils.round(grandTotal - paid));
 
@@ -250,7 +337,7 @@ class PurchasesModule {
             items: formattedItems,
             subtotal,
             totalDiscount,
-            tax: 0,
+            tax: totalTax,
             grandTotal,
             paidAmount: paid,
             remainingAmount: remaining,
@@ -346,7 +433,7 @@ class PurchasesModule {
             totalQtySum += qty;
             const tp = parseFloat(item.tradePrice !== undefined ? item.tradePrice : (item.tp !== undefined ? item.tp : (item.price || 0))) || 0;
             const mrp = parseFloat(item.retailPrice !== undefined ? item.retailPrice : (item.mrp || 0)) || (tp ? Utils.round(tp / 0.85, 2) : 0);
-            const dis = parseFloat(item.discountPercent !== undefined ? item.discountPercent : (item.disPercent !== undefined ? item.disPercent : (item.discount || 0))) || 0;
+            const dis = parseFloat(item.discountPercent !== undefined ? item.discountPercent : (item.purchaseDiscountPercent !== undefined ? item.purchaseDiscountPercent : (item.purchaseDiscount !== undefined ? item.purchaseDiscount : (item.disPercent !== undefined ? item.disPercent : (item.discount || 0))))) || 0;
             const advTax = parseFloat(item.taxPercent !== undefined ? item.taxPercent : (item.advTax !== undefined ? item.advTax : (item.tax || 0))) || 0;
             const discCost = tp * (1 - dis / 100);
             const unitNet = parseFloat(item.netPrice || item.purchaseCost || item.unitCost || item.costPrice) || (discCost + (discCost * advTax / 100));
@@ -479,7 +566,7 @@ class PurchasesModule {
             totalQtySum += qty;
             const tp = parseFloat(item.tradePrice !== undefined ? item.tradePrice : (item.tp !== undefined ? item.tp : (item.price || 0))) || 0;
             const mrp = parseFloat(item.retailPrice !== undefined ? item.retailPrice : (item.mrp || 0)) || (tp ? Utils.round(tp / 0.85, 2) : 0);
-            const dis = parseFloat(item.discountPercent !== undefined ? item.discountPercent : (item.disPercent !== undefined ? item.disPercent : (item.discount || 0))) || 0;
+            const dis = parseFloat(item.discountPercent !== undefined ? item.discountPercent : (item.purchaseDiscountPercent !== undefined ? item.purchaseDiscountPercent : (item.purchaseDiscount !== undefined ? item.purchaseDiscount : (item.disPercent !== undefined ? item.disPercent : (item.discount || 0))))) || 0;
             const advTax = parseFloat(item.taxPercent !== undefined ? item.taxPercent : (item.advTax !== undefined ? item.advTax : (item.tax || 0))) || 0;
             const discCost = tp * (1 - dis / 100);
             const unitNet = parseFloat(item.netPrice || item.purchaseCost || item.unitCost || item.costPrice) || (discCost + (discCost * advTax / 100));

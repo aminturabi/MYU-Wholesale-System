@@ -454,6 +454,7 @@ class App {
             purchasesModule.lineItems[0].expiryDate = prod.expiryDate || '';
             purchasesModule.lineItems[0].tp = prod.tp || 0;
             purchasesModule.lineItems[0].discountPercent = prod.discount || 0;
+            purchasesModule.lineItems[0].taxPercent = parseFloat(prod.advanceTax !== undefined ? prod.advanceTax : (prod.taxPercent || prod.tax || 0)) || 0;
             purchasesModule.updateLineCalculations(0);
             purchasesModule.renderPurchaseLineItemsTable();
             purchasesModule.calculatePurchaseTotals();

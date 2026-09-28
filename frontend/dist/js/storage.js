@@ -494,7 +494,24 @@ const STORAGE_KEYS = {
               products[idx].availableQty = (products[idx].availableQty || 0) + addQty;
               if (item.batchNumber) products[idx].batchNumber = item.batchNumber;
               if (item.expiryDate) products[idx].expiryDate = item.expiryDate;
-              if (item.tp) products[idx].tp = Utils.round(parseFloat(item.tp));
+              if (item.tp) {
+                products[idx].tp = Utils.round(parseFloat(item.tp), 2);
+                products[idx].tradePrice = products[idx].tp;
+              }
+              const discVal = item.discountPercent !== undefined ? item.discountPercent : (item.purchaseDiscountPercent !== undefined ? item.purchaseDiscountPercent : (item.purchaseDiscount !== undefined ? item.purchaseDiscount : item.discount));
+              if (discVal !== undefined && discVal !== '' && !isNaN(parseFloat(discVal))) {
+                const parsedDisc = Utils.round(parseFloat(discVal) || 0, 2);
+                products[idx].purchaseDiscount = parsedDisc;
+                products[idx].purchaseDiscountPercent = parsedDisc;
+                products[idx].discount = parsedDisc;
+              }
+              if (item.purchaseCost || item.netPrice) {
+                products[idx].purchaseCost = Utils.round(parseFloat(item.purchaseCost || item.netPrice) || 0, 4);
+                products[idx].purchasePrice = products[idx].purchaseCost;
+              }
+              if (item.taxPercent !== undefined || item.advTax !== undefined) {
+                products[idx].advanceTax = Utils.round(parseFloat(item.taxPercent !== undefined ? item.taxPercent : item.advTax) || 0, 2);
+              }
             }
           });
           this.saveProducts(products);
@@ -707,7 +724,10 @@ const STORAGE_KEYS = {
           const payments = this.getCustomerPayments();
           const customers = this.getCustomers();
           const amount = Utils.round(parseFloat(data.amount) || 0);
-          const item = { id: Utils.uid("CPAY"), customerId: data.customerId, customerName: data.customerName, saleInvoice: data.saleInvoice || "Direct Credit Payment", date: data.date || Utils.todayStr(), amount, method: data.method || "Cash", reference: data.reference || "", notes: data.notes || "" };
+          const custObj = customers.find(c => c.id === data.customerId);
+          const custName = data.customerName || (custObj ? (custObj.name + (custObj.shopName ? ' (' + custObj.shopName + ')' : '')) : 'Direct Customer');
+          const method = data.paymentMethod || data.method || "Cash";
+          const item = { id: Utils.uid("CPAY"), customerId: data.customerId, customerName: custName, saleInvoice: data.saleInvoice || "Direct Credit Payment", date: data.date || Utils.todayStr(), amount, method: method, paymentMethod: method, reference: data.reference || "", notes: data.notes || "" };
 
           payments.push(item); this.saveCustomerPayments(payments);
           const idx = customers.findIndex(c => c.id === data.customerId);
@@ -721,7 +741,7 @@ const STORAGE_KEYS = {
 
         deletePurchase(id) {
           let list = this.getPurchases();
-          const item = list.find(p => p.id === id);
+          const item = list.find(p => (p.id && p.id === id) || (p.purchaseNumber && p.purchaseNumber === id));
           if (item) {
             if (item.companyId) {
               const companies = this.getCompanies();
@@ -737,12 +757,18 @@ const STORAGE_KEYS = {
             item.items.forEach(i => {
               const idx = products.findIndex(p => (i.productId && p.id === i.productId) || (i.itemNo && p.itemNo === i.itemNo) || (i.name && p.name === i.name));
               if (idx !== -1) {
-                const qty = (parseInt(i.quantity) || 0) + (parseInt(i.bonus) || 0);
-                products[idx].availableQty = Math.max(0, (products[idx].availableQty || 0) - qty);
+                const purQty = parseInt(i.quantity) || 0;
+                const bnsQty = parseInt(i.bonus) || 0;
+                const totalQty = purQty + bnsQty;
+                const currentStock = products[idx].availableQty || 0;
+                const removableQty = Math.min(currentStock, totalQty);
+                products[idx].availableQty = Math.max(0, currentStock - removableQty);
+                products[idx].purchasedQty = Math.max(0, (products[idx].purchasedQty || 0) - purQty);
+                products[idx].bonusQty = Math.max(0, (products[idx].bonusQty || 0) - bnsQty);
               }
             });
             this.saveProducts(products);
-            this.savePurchases(list.filter(p => p.id !== id));
+            this.savePurchases(list.filter(p => p.id !== item.id));
           }
         }
 

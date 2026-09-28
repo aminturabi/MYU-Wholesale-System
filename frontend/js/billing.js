@@ -336,6 +336,11 @@ class BillingModule {
       this.updateItemTotal(existingIdx);
     } else {
       const tpVal = parseFloat(prod.tp || prod.tradePrice) || (parseFloat(prod.salePrice) || 0);
+      const prodDefaultPrice = (prod.defaultPrice !== undefined && prod.defaultPrice !== null && prod.defaultPrice !== '' && !isNaN(parseFloat(prod.defaultPrice)) && parseFloat(prod.defaultPrice) > 0)
+        ? parseFloat(prod.defaultPrice)
+        : NaN;
+      const initialPrice = (!isNaN(prodDefaultPrice) && prodDefaultPrice >= 0) ? prodDefaultPrice : tpVal;
+
       const purDiscVal = parseFloat(prod.purchaseDiscount !== undefined ? prod.purchaseDiscount : prod.discount) || (parseFloat(prod.purchaseDiscountPercent) || 0);
       let costVal = (purDiscVal > 0 && tpVal > 0)
         ? Utils.round(tpVal * (1 - purDiscVal / 100), 4)
@@ -354,7 +359,7 @@ class BillingModule {
         maxStock: prod.availableQty,
         quantity: 1,
         bonus: 0,
-        price: tpVal,
+        price: initialPrice,
         tp: tpVal,
         tradePrice: tpVal,
         purchaseCost: costVal,
@@ -427,26 +432,42 @@ class BillingModule {
     if (!item) return;
 
     if (row.cells[8]) row.cells[8].textContent = item.totalQty || item.quantity;
-    
-    // Net Unit Price Cell (Cell 14)
+
+    // Price sync (Cell 10)
+    if (row.cells[10]) {
+      const pInp = row.cells[10].querySelector('input');
+      if (pInp && document.activeElement !== pInp) {
+        pInp.value = item.price;
+      }
+    }
+
+    // Default Price sync (Cell 14)
     if (row.cells[14]) {
-      row.cells[14].innerHTML = `
+      const defInp = row.cells[14].querySelector('input');
+      if (defInp && document.activeElement !== defInp) {
+        defInp.value = (item.defaultPrice !== undefined && item.defaultPrice !== null && item.defaultPrice !== '') ? item.defaultPrice : '';
+      }
+    }
+    
+    // Net Unit Price Cell (Cell 15)
+    if (row.cells[15]) {
+      row.cells[15].innerHTML = `
         <div style="font-weight: 700; color: ${item.isLoss ? '#dc2626' : '#0f172a'};">Rs.${(item.netUnitPrice || item.price).toFixed(2)}</div>
         ${item.isLoss ? `<div style="font-size: 0.68rem; color: #dc2626; font-weight: 700;" title="Cost: Rs.${(item.purchaseCost || 0).toFixed(2)}">Cost: Rs.${(item.purchaseCost || 0).toFixed(2)}</div>` : ''}
       `;
     }
 
-    // Total Amount Cell (Cell 15)
-    if (row.cells[15]) {
-      row.cells[15].innerHTML = `
+    // Total Amount Cell (Cell 16)
+    if (row.cells[16]) {
+      row.cells[16].innerHTML = `
         <div style="font-weight: 800; color: ${item.isLoss ? '#dc2626' : 'var(--primary)'};">Rs.${item.totalAmount.toFixed(2)}</div>
         ${item.isLoss ? `<div style="font-size: 0.68rem; color: #dc2626; font-weight: 800; margin-top: 1px;" title="Below purchase cost! Max break-even discount: ${item.breakEvenDiscount.toFixed(1)}%"><i class="fa-solid fa-triangle-exclamation"></i> Loss: Rs.${item.unitLoss.toFixed(2)}/u</div>` : ''}
       `;
     }
 
-    // Margin / Profit Cell (Cell 16)
-    if (row.cells[16]) {
-      row.cells[16].innerHTML = this.getMarginBadgeHtml(item);
+    // Margin / Profit Cell (Cell 17)
+    if (row.cells[17]) {
+      row.cells[17].innerHTML = this.getMarginBadgeHtml(item);
     }
 
     // Row Alert Styling
@@ -503,6 +524,22 @@ class BillingModule {
   updateCartItemPrice(index, priceStr) {
     if (!this.cartItems[index]) return;
     this.cartItems[index].price = Math.max(0, parseFloat(priceStr) || 0);
+    this.updateItemTotal(index);
+    this.updateRowDom(index);
+    this.calculateCartTotals();
+  }
+
+  updateCartItemDefaultPrice(index, defPriceStr) {
+    if (!this.cartItems[index]) return;
+    const item = this.cartItems[index];
+    const parsed = parseFloat(defPriceStr);
+    if (!isNaN(parsed) && parsed >= 0 && defPriceStr.trim() !== '') {
+      item.defaultPrice = parsed;
+      item.price = parsed;
+    } else {
+      item.defaultPrice = '';
+      item.price = item.tp || 0;
+    }
     this.updateItemTotal(index);
     this.updateRowDom(index);
     this.calculateCartTotals();
@@ -595,7 +632,7 @@ class BillingModule {
     if (!tbody) return;
 
     if (!this.cartItems.length) {
-      Utils.emptyTable(tbody, 18, '<i class="fa-solid fa-basket-shopping" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 8px; display: block;"></i> No items added to bill yet. Search & add medicines above.');
+      Utils.emptyTable(tbody, 19, '<i class="fa-solid fa-basket-shopping" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 8px; display: block;"></i> No items added to bill yet. Search & add medicines above.');
       return;
     }
 
@@ -626,6 +663,7 @@ class BillingModule {
         <td><input type="number" step="0.1" class="form-control-myu pos-cart-input pos-disc-input" value="${item.discountPercent || 0}" oninput="billingModule.updateCartItemDisc(${idx}, this.value)" onchange="billingModule.updateCartItemDisc(${idx}, this.value)" style="width: 55px; padding: 4px; ${discStyle}"></td>
         <td><input type="number" step="0.1" class="form-control-myu pos-cart-input" value="${item.extPercent || 0}" oninput="billingModule.updateCartItemExt(${idx}, this.value)" onchange="billingModule.updateCartItemExt(${idx}, this.value)" style="width: 55px; padding: 4px;"></td>
         <td><input type="number" step="0.1" class="form-control-myu pos-cart-input" value="${item.taxPercent || 0}" oninput="billingModule.updateCartItemTax(${idx}, this.value)" onchange="billingModule.updateCartItemTax(${idx}, this.value)" style="width: 55px; padding: 4px;"></td>
+        <td><input type="number" step="0.01" class="form-control-myu pos-cart-input" placeholder="${(item.tp || 0).toFixed(2)}" value="${(item.defaultPrice !== undefined && item.defaultPrice !== null && item.defaultPrice !== '') ? item.defaultPrice : ''}" oninput="billingModule.updateCartItemDefaultPrice(${idx}, this.value)" onchange="billingModule.updateCartItemDefaultPrice(${idx}, this.value)" style="width: 75px; padding: 4px;" title="Default Price (Optional)"></td>
         <td style="text-align: right;">
           <div style="font-weight: 700; color: ${item.isLoss ? '#dc2626' : '#0f172a'};">Rs.${(item.netUnitPrice || item.price).toFixed(2)}</div>
           ${item.isLoss ? `<div style="font-size: 0.68rem; color: #dc2626; font-weight: 700;">Cost: Rs.${(item.purchaseCost || 0).toFixed(2)}</div>` : ''}

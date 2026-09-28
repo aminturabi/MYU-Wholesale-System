@@ -194,6 +194,9 @@ class ProductsModule {
     const taxElem = document.getElementById('pm-advance-tax');
     if (taxElem) taxElem.value = '0';
 
+    const defPriceElem = document.getElementById('pm-default-price');
+    if (defPriceElem) defPriceElem.value = '';
+
     const purQtyElem = document.getElementById('pm-purchased-qty');
     if (purQtyElem) purQtyElem.value = '0';
 
@@ -259,6 +262,9 @@ class ProductsModule {
     const taxElem = document.getElementById('pm-advance-tax');
     if (taxElem) taxElem.value = !isNaN(taxVal) ? taxVal : 0;
 
+    const defPriceElem = document.getElementById('pm-default-price');
+    if (defPriceElem) defPriceElem.value = (p.defaultPrice !== undefined && p.defaultPrice !== null && p.defaultPrice !== '') ? p.defaultPrice : '';
+
     const costElem = document.getElementById('pm-purchase-cost');
     if (costElem) costElem.value = costVal > 0 ? costVal.toFixed(2) : '';
 
@@ -316,6 +322,8 @@ class ProductsModule {
 
     const discVal = parseFloat(document.getElementById('pm-discount-percent')?.value) || 0;
     const advTaxVal = parseFloat(document.getElementById('pm-advance-tax')?.value) || 0;
+    const defaultPriceVal = parseFloat(document.getElementById('pm-default-price')?.value);
+    const validDefaultPrice = (!isNaN(defaultPriceVal) && defaultPriceVal > 0) ? defaultPriceVal : null;
 
     const unitDiscount = (tpVal * discVal) / 100;
     const unroundedUnitCost = tpVal - unitDiscount;
@@ -337,6 +345,7 @@ class ProductsModule {
       retailPrice: retailPriceVal,
       tradePrice: tpVal,
       tp: tpVal,
+      defaultPrice: validDefaultPrice,
       quantity: qty,
       bonus: bonusQty,
       bonusQty: bonusQty,
@@ -372,6 +381,8 @@ class ProductsModule {
     if (bonusResetElem) bonusResetElem.value = '0';
     document.getElementById('pm-discount-percent').value = '25';
     document.getElementById('pm-advance-tax').value = '0';
+    const defPriceReset = document.getElementById('pm-default-price');
+    if (defPriceReset) defPriceReset.value = '';
     document.getElementById('pm-purchase-cost').value = '';
     document.getElementById('pm-total-net').value = '0.00';
     document.getElementById('pm-rack').value = '';
@@ -451,6 +462,7 @@ class ProductsModule {
                   <td style="padding: 5px 6px; text-align: center; font-weight: 800; color: #8b5cf6;">${item.bonus || 0}</td>
                   <td style="padding: 5px 6px; text-align: center; color: #d97706; font-weight: 700;">${item.discountPercent > 0 ? item.discountPercent + '%' : '-'}</td>
                   <td style="padding: 5px 6px; text-align: center; color: #6366f1; font-weight: 700;">${item.advanceTaxPercent > 0 ? item.advanceTaxPercent + '%' : '0%'}</td>
+                  <td style="padding: 5px 6px; text-align: right; font-weight: 700; color: #0f172a; white-space: nowrap;">${item.defaultPrice > 0 ? item.defaultPrice.toFixed(2) : '-'}</td>
                   <td style="padding: 5px 6px; text-align: right; font-weight: 700; color: #0f172a; white-space: nowrap;">${item.unitCost.toFixed(2)}</td>
                   <td style="padding: 5px 6px; text-align: right; font-weight: 800; color: #047857; white-space: nowrap;">${item.lineNet.toFixed(2)}</td>
                   <td style="padding: 5px 6px; text-align: center;">
@@ -610,6 +622,7 @@ class ProductsModule {
         tp: staged.tradePrice,
         tradePrice: staged.tradePrice,
         salePrice: staged.tradePrice,
+        defaultPrice: staged.defaultPrice || null,
         retailPrice: staged.retailPrice,
         discount: staged.discountPercent,
         purchaseDiscount: staged.discountPercent,
@@ -631,6 +644,9 @@ class ProductsModule {
         p.tp = staged.tradePrice;
         p.tradePrice = staged.tradePrice;
         p.retailPrice = staged.retailPrice || p.retailPrice;
+        if (staged.defaultPrice !== undefined && staged.defaultPrice !== null) {
+          p.defaultPrice = staged.defaultPrice;
+        }
         p.discount = staged.discountPercent;
         p.advanceTax = staged.advanceTaxPercent;
         p.purchaseCost = staged.unitCost;
@@ -722,6 +738,8 @@ class ProductsModule {
     const tpVal = parseFloat(document.getElementById('pm-tp')?.value) || (retailPriceVal ? Utils.round(retailPriceVal * 0.85, 2) : 0);
     const discVal = parseFloat(document.getElementById('pm-discount-percent')?.value) || 0;
     const advTaxVal = parseFloat(document.getElementById('pm-advance-tax')?.value) || 0;
+    const defaultPriceVal = parseFloat(document.getElementById('pm-default-price')?.value);
+    const validDefaultPrice = (!isNaN(defaultPriceVal) && defaultPriceVal > 0) ? defaultPriceVal : null;
 
     const unitDiscount = (tpVal * discVal) / 100;
     const advTaxAmount = (tpVal * advTaxVal) / 100;
@@ -741,6 +759,7 @@ class ProductsModule {
       tp: tpVal,
       tradePrice: tpVal,
       salePrice: tpVal,
+      defaultPrice: validDefaultPrice,
       retailPrice: retailPriceVal,
       discount: discVal,
       purchaseDiscount: discVal,

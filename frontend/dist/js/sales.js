@@ -822,8 +822,45 @@ SalesModule.prototype.saveCustomerPaymentForm = function () {
     appObj.closeModal('customer-payment-modal');
   }
   this.renderCustomers();
+  this.renderCustomerPayments();
   this.refreshCustomerDropdowns();
   if (appObj && typeof appObj.refreshCurrentView === 'function') {
     appObj.refreshCurrentView();
   }
+};
+
+SalesModule.prototype.renderCustomerPayments = function () {
+  const tbody = document.getElementById('customer-payments-tbody');
+  if (!tbody) return;
+
+  const payments = storage.getCustomerPayments();
+  const customers = storage.getCustomers();
+  const settings = storage.getSettings();
+
+  if (!payments.length) {
+    Utils.emptyTable(tbody, 6, 'No customer payments recorded yet.');
+    return;
+  }
+
+  let html = '';
+  payments.slice().reverse().forEach(p => {
+    let custName = p.customerName;
+    if (!custName && p.customerId) {
+      const cust = customers.find(c => c.id === p.customerId);
+      if (cust) {
+        custName = cust.name + (cust.shopName ? ` (${cust.shopName})` : '');
+      }
+    }
+    html += `
+      <tr>
+        <td>${p.date || '-'}</td>
+        <td><span style="font-weight: 700; color: #0f172a;">${custName || 'Walk-in Customer'}</span></td>
+        <td>${Utils.badge(p.paymentMethod || p.method || 'Cash')}</td>
+        <td style="font-weight: 800; color: #059669;">${Utils.formatCurrency(p.amount, settings.currency)}</td>
+        <td>${p.reference || '-'}</td>
+        <td style="font-size: 0.85rem; color: #64748b;">${p.notes || '-'}</td>
+      </tr>
+    `;
+  });
+  tbody.innerHTML = html;
 };
