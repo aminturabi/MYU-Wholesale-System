@@ -375,18 +375,93 @@ const STORAGE_KEYS = {
 
         // CRUD Helpers
         addProduct(data) {
+          if (!data || !data.name) return null;
           const list = this.getProducts();
-          const tp = Utils.round(parseFloat(data.tp || data.tradePrice) || 0);
-          const purchaseCost = Utils.round(parseFloat(data.purchaseCost || data.purchasePrice || data.costPrice) || (tp * 0.85));
+          const cleanName = String(data.name || '').trim().toLowerCase();
+          const cleanItemNo = data.itemNo ? String(data.itemNo).trim().toLowerCase() : '';
+          const cleanBarcode = data.barcode ? String(data.barcode).trim().toLowerCase() : '';
+          const cleanId = data.id ? String(data.id).trim() : '';
+
+          // 1. Check for existing product by ID, Barcode, Name, or ItemNo
+          let existingIdx = -1;
+
+          if (cleanId) {
+            existingIdx = list.findIndex(p => p.id === cleanId);
+          }
+          if (existingIdx === -1 && cleanBarcode) {
+            existingIdx = list.findIndex(p => p.barcode && String(p.barcode).trim().toLowerCase() === cleanBarcode);
+          }
+          if (existingIdx === -1 && cleanName) {
+            existingIdx = list.findIndex(p => p.name && String(p.name).trim().toLowerCase() === cleanName);
+          }
+          if (existingIdx === -1 && cleanItemNo) {
+            existingIdx = list.findIndex(p => p.itemNo && String(p.itemNo).trim().toLowerCase() === cleanItemNo);
+          }
+
+          const tp = Utils.round(parseFloat(data.tp !== undefined ? data.tp : (data.tradePrice !== undefined ? data.tradePrice : data.salePrice)) || 0);
+          const purchaseCost = Utils.round(parseFloat(data.purchaseCost !== undefined ? data.purchaseCost : (data.purchasePrice !== undefined ? data.purchasePrice : data.costPrice)) || (tp > 0 ? tp * 0.85 : 0));
+
+          if (existingIdx !== -1) {
+            // Product already exists: update master metadata while preserving existing stock
+            const p = list[existingIdx];
+            if (data.genericName !== undefined) p.genericName = data.genericName;
+            if (data.brand !== undefined) p.brand = data.brand;
+            if (data.company !== undefined && data.company) p.company = data.company;
+            if (data.category !== undefined) p.category = data.category;
+            if (data.batchNumber) p.batchNumber = data.batchNumber;
+            if (data.expiryDate) p.expiryDate = data.expiryDate;
+            if (tp > 0) {
+              p.tp = tp;
+              p.tradePrice = tp;
+              p.salePrice = tp;
+            }
+            if (data.retailPrice !== undefined && !isNaN(parseFloat(data.retailPrice)) && parseFloat(data.retailPrice) > 0) {
+              p.retailPrice = Utils.round(parseFloat(data.retailPrice));
+            }
+            if (data.defaultPrice !== undefined && data.defaultPrice !== null && !isNaN(parseFloat(data.defaultPrice))) {
+              p.defaultPrice = parseFloat(data.defaultPrice);
+            }
+            if (data.discount !== undefined) {
+              p.discount = Utils.round(parseFloat(data.discount) || 0);
+              p.purchaseDiscount = p.discount;
+            }
+            if (data.advanceTax !== undefined) {
+              p.advanceTax = Utils.round(parseFloat(data.advanceTax) || 0);
+            }
+            if (purchaseCost > 0) {
+              p.purchaseCost = purchaseCost;
+              p.purchasePrice = purchaseCost;
+              p.costPrice = purchaseCost;
+            }
+            if (data.rackNumber) p.rackNumber = data.rackNumber;
+            if (data.minStockLevel) p.minStockLevel = parseInt(data.minStockLevel) || p.minStockLevel || 10;
+            if (data.barcode) p.barcode = data.barcode;
+            if (data.notes) p.notes = data.notes;
+
+            this.saveProducts(list);
+            return p;
+          }
+
+          // Ensure unique itemNo for new product
+          let finalItemNo = data.itemNo ? String(data.itemNo).trim() : '';
+          if (!finalItemNo || list.some(p => p.itemNo && p.itemNo.trim().toLowerCase() === finalItemNo.toLowerCase())) {
+            let nextNum = 1000 + list.length + 1;
+            finalItemNo = "MED-" + nextNum;
+            while (list.some(p => p.itemNo && p.itemNo.trim().toLowerCase() === finalItemNo.toLowerCase())) {
+              nextNum++;
+              finalItemNo = "MED-" + nextNum;
+            }
+          }
+
           const item = { 
             id: Utils.uid("PROD"), 
-            itemNo: data.itemNo || "MED-" + (1000 + list.length + 1), 
-            name: data.name, 
+            itemNo: finalItemNo, 
+            name: String(data.name).trim(), 
             genericName: data.genericName || "", 
             brand: data.brand || "", 
             company: data.company || "", 
             category: data.category || "Medicines", 
-            batchNumber: data.batchNumber || "B-" + Math.floor(1000 + Math.random() * 9000), 
+            batchNumber: data.batchNumber || "", 
             expiryDate: data.expiryDate || "", 
             tp: tp, 
             tradePrice: tp, 
@@ -394,16 +469,22 @@ const STORAGE_KEYS = {
             purchasePrice: purchaseCost, 
             costPrice: purchaseCost, 
             salePrice: Utils.round(parseFloat(data.salePrice) || tp), 
-            retailPrice: Utils.round(parseFloat(data.retailPrice) || (tp / 0.85) || 0), 
+            retailPrice: Utils.round(parseFloat(data.retailPrice) || (tp > 0 ? (tp / 0.85) : 0)), 
+            defaultPrice: (data.defaultPrice !== undefined && data.defaultPrice !== null && !isNaN(parseFloat(data.defaultPrice))) ? parseFloat(data.defaultPrice) : null,
             purchasedQty: parseInt(data.purchasedQty) || 0, 
             availableQty: parseInt(data.availableQty) || 0, 
             bonusQty: parseInt(data.bonusQty) || 0, 
             discount: Utils.round(parseFloat(data.discount) || 0), 
+            purchaseDiscount: Utils.round(parseFloat(data.purchaseDiscount !== undefined ? data.purchaseDiscount : data.discount) || 0),
+            advanceTax: Utils.round(parseFloat(data.advanceTax) || 0),
             rackNumber: data.rackNumber || "", 
+            barcode: data.barcode || "",
             minStockLevel: parseInt(data.minStockLevel) || 10, 
             notes: data.notes || "" 
           };
-          list.push(item); this.saveProducts(list); return item;
+          list.push(item); 
+          this.saveProducts(list); 
+          return item;
         }
 
         updateProduct(id, data) {
@@ -486,17 +567,30 @@ const STORAGE_KEYS = {
 
           // Update product inventory
           newPur.items.forEach(item => {
-            const idx = products.findIndex(p => (item.productId && p.id === item.productId) || (item.itemNo && p.itemNo === item.itemNo) || (item.name && p.name === item.name));
+            const cleanItemId = item.productId ? String(item.productId).trim() : '';
+            const cleanItemNo = item.itemNo ? String(item.itemNo).trim().toLowerCase() : '';
+            const cleanItemName = item.name ? String(item.name).trim().toLowerCase() : '';
+
+            const idx = products.findIndex(p => 
+              (cleanItemId && p.id === cleanItemId) || 
+              (cleanItemNo && p.itemNo && String(p.itemNo).trim().toLowerCase() === cleanItemNo) || 
+              (cleanItemName && p.name && String(p.name).trim().toLowerCase() === cleanItemName)
+            );
+
+            const addQty = (parseInt(item.quantity) || 0) + (parseInt(item.bonus) || 0);
+
             if (idx !== -1) {
-              const addQty = (parseInt(item.quantity) || 0) + (parseInt(item.bonus) || 0);
               products[idx].purchasedQty = (products[idx].purchasedQty || 0) + (parseInt(item.quantity) || 0);
               products[idx].bonusQty = (products[idx].bonusQty || 0) + (parseInt(item.bonus) || 0);
               products[idx].availableQty = (products[idx].availableQty || 0) + addQty;
-              if (item.batchNumber) products[idx].batchNumber = item.batchNumber;
-              if (item.expiryDate) products[idx].expiryDate = item.expiryDate;
+              if (item.batchNumber && item.batchNumber !== '-') products[idx].batchNumber = item.batchNumber;
+              if (item.expiryDate && item.expiryDate !== '-') products[idx].expiryDate = item.expiryDate;
               if (item.tp) {
                 products[idx].tp = Utils.round(parseFloat(item.tp), 2);
                 products[idx].tradePrice = products[idx].tp;
+              }
+              if (item.retailPrice) {
+                products[idx].retailPrice = Utils.round(parseFloat(item.retailPrice), 2);
               }
               const discVal = item.discountPercent !== undefined ? item.discountPercent : (item.purchaseDiscountPercent !== undefined ? item.purchaseDiscountPercent : (item.purchaseDiscount !== undefined ? item.purchaseDiscount : item.discount));
               if (discVal !== undefined && discVal !== '' && !isNaN(parseFloat(discVal))) {
@@ -512,6 +606,46 @@ const STORAGE_KEYS = {
               if (item.taxPercent !== undefined || item.advTax !== undefined) {
                 products[idx].advanceTax = Utils.round(parseFloat(item.taxPercent !== undefined ? item.taxPercent : item.advTax) || 0, 2);
               }
+              if (item.defaultPrice !== undefined && item.defaultPrice !== null && !isNaN(parseFloat(item.defaultPrice))) {
+                products[idx].defaultPrice = parseFloat(item.defaultPrice);
+              }
+            } else {
+              // Product does not exist in master product catalog yet: create it automatically!
+              const tpVal = Utils.round(parseFloat(item.tp || item.price || item.tradePrice) || 0);
+              const retVal = Utils.round(parseFloat(item.retailPrice) || (tpVal > 0 ? (tpVal / 0.85) : 0));
+              const costVal = Utils.round(parseFloat(item.purchaseCost || item.netPrice) || (tpVal * 0.85));
+              const discVal = Utils.round(parseFloat(item.discountPercent !== undefined ? item.discountPercent : (item.discount || 0)) || 0);
+              const taxVal = Utils.round(parseFloat(item.taxPercent !== undefined ? item.taxPercent : (item.advTax || 0)) || 0);
+
+              const newProduct = {
+                id: item.productId || Utils.uid("PROD"),
+                itemNo: item.itemNo || item.code || ("MED-" + (1000 + products.length + 1)),
+                name: String(item.name || '').trim(),
+                genericName: item.genericName || "",
+                brand: item.brand || "",
+                company: item.company || newPur.companyName || "",
+                category: item.category || "Medicines",
+                batchNumber: (item.batchNumber && item.batchNumber !== '-') ? item.batchNumber : "",
+                expiryDate: (item.expiryDate && item.expiryDate !== '-') ? item.expiryDate : "",
+                tp: tpVal,
+                tradePrice: tpVal,
+                purchaseCost: costVal,
+                purchasePrice: costVal,
+                costPrice: costVal,
+                salePrice: tpVal,
+                retailPrice: retVal,
+                defaultPrice: (item.defaultPrice !== undefined && item.defaultPrice !== null && !isNaN(parseFloat(item.defaultPrice))) ? parseFloat(item.defaultPrice) : null,
+                purchasedQty: parseInt(item.quantity) || 0,
+                availableQty: addQty,
+                bonusQty: parseInt(item.bonus) || 0,
+                discount: discVal,
+                purchaseDiscount: discVal,
+                advanceTax: taxVal,
+                rackNumber: item.rackNumber || "",
+                minStockLevel: 10,
+                notes: ""
+              };
+              products.push(newProduct);
             }
           });
           this.saveProducts(products);

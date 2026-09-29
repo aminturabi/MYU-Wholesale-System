@@ -293,33 +293,33 @@ class ProductsModule {
   stageCurrentItem() {
     const itemNoElem = document.getElementById('pm-item-no');
     const nameElem = document.getElementById('pm-name');
-    const itemNo = (itemNoElem ? itemNoElem.value : '').trim();
+    let itemNo = (itemNoElem ? itemNoElem.value : '').trim();
     const name = (nameElem ? nameElem.value : '').trim();
 
-    if (!itemNo || !name) {
-      app.showToast('Please enter both Item Code and Product Name.', 'warning');
-      if (!itemNo && itemNoElem) itemNoElem.focus();
-      else if (nameElem) nameElem.focus();
+    if (!name) {
+      app.showToast('Please enter Product Name.', 'warning');
+      if (nameElem) nameElem.focus();
       return;
     }
 
-    const qty = parseInt(document.getElementById('pm-purchased-qty')?.value) || 0;
-    const bonusQty = parseInt(document.getElementById('pm-bonus-qty')?.value) || 0;
-    if (qty <= 0) {
-      app.showToast('Please enter a Purchased Qty greater than 0.', 'warning');
-      document.getElementById('pm-purchased-qty')?.focus();
-      return;
+    if (!itemNo) {
+      itemNo = 'MED-' + (1000 + storage.getProducts().length + 1);
     }
 
     const retailPriceVal = parseFloat(document.getElementById('pm-retail-price')?.value) || 0;
-    const tpVal = parseFloat(document.getElementById('pm-tp')?.value) || (retailPriceVal ? Utils.round(retailPriceVal * 0.85, 2) : 0);
+    let tpVal = parseFloat(document.getElementById('pm-tp')?.value) || (retailPriceVal ? Utils.round(retailPriceVal * 0.85, 2) : 0);
 
-    if (tpVal <= 0) {
+    if (tpVal <= 0 && retailPriceVal <= 0) {
       app.showToast('Please enter Trade Price (TP) or Retail Price (MRP).', 'warning');
       document.getElementById('pm-tp')?.focus();
       return;
     }
+    if (tpVal <= 0 && retailPriceVal > 0) {
+      tpVal = Utils.round(retailPriceVal * 0.85, 2);
+    }
 
+    const qty = parseInt(document.getElementById('pm-purchased-qty')?.value) || 0;
+    const bonusQty = parseInt(document.getElementById('pm-bonus-qty')?.value) || 0;
     const discVal = parseFloat(document.getElementById('pm-discount-percent')?.value) || 0;
     const advTaxVal = parseFloat(document.getElementById('pm-advance-tax')?.value) || 0;
     const defaultPriceVal = parseFloat(document.getElementById('pm-default-price')?.value);
@@ -332,42 +332,98 @@ class ProductsModule {
     const finalUnitCost = !isNaN(manualCost) && manualCost > 0 ? manualCost : unroundedUnitCost;
     const lineNet = Utils.round(qty * (finalUnitCost + advTaxAmount), 2);
 
-    const stagedItem = {
-      id: Utils.uid('STG'),
+    // 1. Permanent Master Product Save (with duplicate check handled by storage.addProduct)
+    const masterData = {
       itemNo: itemNo,
       name: name,
       genericName: document.getElementById('pm-generic')?.value || '',
       company: document.getElementById('pm-company')?.value || '',
       category: document.getElementById('pm-category')?.value || 'Medicines',
-      batchNumber: document.getElementById('pm-batch')?.value || '-',
-      expiryDate: document.getElementById('pm-expiry')?.value || '-',
+      batchNumber: document.getElementById('pm-batch')?.value || '',
+      expiryDate: document.getElementById('pm-expiry')?.value || '',
       rackNumber: document.getElementById('pm-rack')?.value || '',
-      retailPrice: retailPriceVal,
+      retailPrice: retailPriceVal > 0 ? retailPriceVal : Utils.round(tpVal / 0.85, 2),
       tradePrice: tpVal,
       tp: tpVal,
+      salePrice: tpVal,
       defaultPrice: validDefaultPrice,
-      quantity: qty,
-      bonus: bonusQty,
-      bonusQty: bonusQty,
-      purchasedQty: qty,
-      availableQty: qty,
+      discount: discVal,
+      purchaseDiscount: discVal,
+      advanceTax: advTaxVal,
+      purchaseCost: finalUnitCost,
+      purchasePrice: finalUnitCost,
+      costPrice: finalUnitCost,
       minStockLevel: 10,
-      discountPercent: discVal,
-      advanceTaxPercent: advTaxVal,
-      unitDiscount: Utils.round(unitDiscount, 4),
-      unitTax: Utils.round(advTaxAmount, 4),
-      unitCost: Utils.round(finalUnitCost, 2),
-      unroundedUnitCost: finalUnitCost,
-      gross: Utils.round(qty * tpVal, 2),
-      discountAmount: Utils.round(qty * unitDiscount, 2),
-      taxAmount: Utils.round(qty * advTaxAmount, 2),
-      lineNet: lineNet
+      availableQty: qty > 0 ? (qty + bonusQty) : 0,
+      purchasedQty: qty,
+      bonusQty: bonusQty
     };
 
-    if (!this.stagedPurchaseItems) this.stagedPurchaseItems = [];
-    this.stagedPurchaseItems.push(stagedItem);
+    let savedProduct = null;
+    try {
+      savedProduct = storage.addProduct(masterData);
+    } catch (err) {
+      console.error('Failed to save product:', err);
+      app.showToast('Error saving product to database: ' + (err.message || err), 'danger');
+      return;
+    }
 
-    app.showToast(`Added "${stagedItem.name}" to invoice!`, 'success');
+    if (!savedProduct || !savedProduct.id) {
+      app.showToast('Could not save product record.', 'danger');
+      return;
+    }
+
+    // 2. Refresh active UI views so the product immediately appears in Products List, Reports, etc.
+    this.renderProducts();
+    this.renderInventory();
+    if (typeof purchasesModule !== 'undefined' && typeof purchasesModule.renderPurchaseLineItemsTable === 'function') {
+      purchasesModule.renderPurchaseLineItemsTable();
+    }
+    if (window.app && typeof window.app.updateHeaderCounters === 'function') {
+      window.app.updateHeaderCounters();
+    }
+
+    // 3. If quantity > 0, stage the item into the purchase invoice table
+    if (qty > 0) {
+      const stagedItem = {
+        id: Utils.uid('STG'),
+        productId: savedProduct.id,
+        itemNo: savedProduct.itemNo,
+        name: savedProduct.name,
+        genericName: savedProduct.genericName,
+        company: savedProduct.company,
+        category: savedProduct.category,
+        batchNumber: document.getElementById('pm-batch')?.value || '-',
+        expiryDate: document.getElementById('pm-expiry')?.value || '-',
+        rackNumber: savedProduct.rackNumber || '',
+        retailPrice: savedProduct.retailPrice,
+        tradePrice: savedProduct.tradePrice,
+        tp: savedProduct.tp,
+        defaultPrice: validDefaultPrice,
+        quantity: qty,
+        bonus: bonusQty,
+        bonusQty: bonusQty,
+        purchasedQty: qty,
+        availableQty: qty,
+        minStockLevel: 10,
+        discountPercent: discVal,
+        advanceTaxPercent: advTaxVal,
+        unitDiscount: Utils.round(unitDiscount, 4),
+        unitTax: Utils.round(advTaxAmount, 4),
+        unitCost: Utils.round(finalUnitCost, 2),
+        unroundedUnitCost: finalUnitCost,
+        gross: Utils.round(qty * tpVal, 2),
+        discountAmount: Utils.round(qty * unitDiscount, 2),
+        taxAmount: Utils.round(qty * advTaxAmount, 2),
+        lineNet: lineNet
+      };
+
+      if (!this.stagedPurchaseItems) this.stagedPurchaseItems = [];
+      this.stagedPurchaseItems.push(stagedItem);
+      app.showToast(`Product "${savedProduct.name}" saved permanently & added to invoice!`, 'success');
+    } else {
+      app.showToast(`Product "${savedProduct.name}" saved permanently to Products List!`, 'success');
+    }
 
     // Reset line fields for next item
     document.getElementById('pm-name').value = '';
@@ -572,9 +628,10 @@ class ProductsModule {
     if (!this.stagedPurchaseItems || this.stagedPurchaseItems.length === 0) {
       const name = (document.getElementById('pm-name')?.value || '').trim();
       const tp = parseFloat(document.getElementById('pm-tp')?.value) || 0;
+      const mrp = parseFloat(document.getElementById('pm-retail-price')?.value) || 0;
       const qty = parseInt(document.getElementById('pm-purchased-qty')?.value) || 0;
 
-      if (name && tp > 0 && qty > 0) {
+      if (name && (tp > 0 || mrp > 0) && qty > 0) {
         this.stageCurrentItem();
       } else {
         app.showToast('Please add at least one line item to the purchase invoice.', 'warning');
@@ -602,7 +659,7 @@ class ProductsModule {
     let totalTax = 0;
     let grandTotal = 0;
 
-    // 1. Process & Update Inventory Products
+    // 1. Link staged items with permanent product records and sync latest metadata
     const existingProducts = storage.getProducts();
 
     items.forEach(staged => {
@@ -611,50 +668,57 @@ class ProductsModule {
       totalTax += staged.taxAmount;
       grandTotal += staged.lineNet;
 
-      const prodData = {
-        itemNo: staged.itemNo,
-        name: staged.name,
-        genericName: staged.genericName,
-        company: staged.company || companyName,
-        category: staged.category,
-        batchNumber: staged.batchNumber,
-        expiryDate: staged.expiryDate,
-        tp: staged.tradePrice,
-        tradePrice: staged.tradePrice,
-        salePrice: staged.tradePrice,
-        defaultPrice: staged.defaultPrice || null,
-        retailPrice: staged.retailPrice,
-        discount: staged.discountPercent,
-        purchaseDiscount: staged.discountPercent,
-        advanceTax: staged.advanceTaxPercent,
-        purchaseCost: staged.unitCost,
-        purchasePrice: staged.unitCost,
-        costPrice: staged.unitCost,
-        purchasedQty: 0,
-        availableQty: 0,
-        minStockLevel: staged.minStockLevel || 10,
-        rackNumber: staged.rackNumber
-      };
+      let p = existingProducts.find(prod => 
+        (staged.productId && prod.id === staged.productId) ||
+        (staged.itemNo && prod.itemNo && prod.itemNo.toLowerCase() === staged.itemNo.toLowerCase()) ||
+        (staged.name && prod.name && prod.name.toLowerCase() === staged.name.toLowerCase())
+      );
 
-      const matchIdx = existingProducts.findIndex(p => p.itemNo === staged.itemNo || p.name.toLowerCase() === staged.name.toLowerCase());
-      if (matchIdx !== -1) {
-        const p = existingProducts[matchIdx];
-        p.batchNumber = staged.batchNumber || p.batchNumber;
-        p.expiryDate = staged.expiryDate || p.expiryDate;
-        p.tp = staged.tradePrice;
-        p.tradePrice = staged.tradePrice;
+      if (p) {
+        staged.productId = p.id;
+        if (staged.batchNumber && staged.batchNumber !== '-') p.batchNumber = staged.batchNumber;
+        if (staged.expiryDate && staged.expiryDate !== '-') p.expiryDate = staged.expiryDate;
+        p.tp = staged.tradePrice || p.tp;
+        p.tradePrice = staged.tradePrice || p.tradePrice;
         p.retailPrice = staged.retailPrice || p.retailPrice;
         if (staged.defaultPrice !== undefined && staged.defaultPrice !== null) {
           p.defaultPrice = staged.defaultPrice;
         }
-        p.discount = staged.discountPercent;
-        p.advanceTax = staged.advanceTaxPercent;
-        p.purchaseCost = staged.unitCost;
-        p.salePrice = staged.tradePrice;
+        if (staged.discountPercent !== undefined) {
+          p.discount = staged.discountPercent;
+          p.purchaseDiscount = staged.discountPercent;
+        }
+        if (staged.advanceTaxPercent !== undefined) {
+          p.advanceTax = staged.advanceTaxPercent;
+        }
+        p.purchaseCost = staged.unitCost || p.purchaseCost;
+        p.salePrice = staged.tradePrice || p.salePrice;
         storage.updateProduct(p.id, p);
-        staged.productId = p.id;
       } else {
-        const created = storage.addProduct(prodData);
+        const created = storage.addProduct({
+          itemNo: staged.itemNo,
+          name: staged.name,
+          genericName: staged.genericName,
+          company: staged.company || companyName,
+          category: staged.category,
+          batchNumber: staged.batchNumber !== '-' ? staged.batchNumber : '',
+          expiryDate: staged.expiryDate !== '-' ? staged.expiryDate : '',
+          tp: staged.tradePrice,
+          tradePrice: staged.tradePrice,
+          salePrice: staged.tradePrice,
+          defaultPrice: staged.defaultPrice || null,
+          retailPrice: staged.retailPrice,
+          discount: staged.discountPercent,
+          purchaseDiscount: staged.discountPercent,
+          advanceTax: staged.advanceTaxPercent,
+          purchaseCost: staged.unitCost,
+          purchasePrice: staged.unitCost,
+          costPrice: staged.unitCost,
+          purchasedQty: 0,
+          availableQty: 0,
+          minStockLevel: staged.minStockLevel || 10,
+          rackNumber: staged.rackNumber
+        });
         if (created) staged.productId = created.id;
       }
     });
@@ -665,8 +729,8 @@ class ProductsModule {
       itemNo: staged.itemNo,
       code: staged.itemNo,
       name: staged.name,
-      batchNumber: staged.batchNumber,
-      expiryDate: staged.expiryDate,
+      batchNumber: staged.batchNumber !== '-' ? staged.batchNumber : '',
+      expiryDate: staged.expiryDate !== '-' ? staged.expiryDate : '',
       quantity: staged.quantity,
       bonus: staged.bonus || 0,
       price: staged.tradePrice,
@@ -769,7 +833,7 @@ class ProductsModule {
       costPrice: purchaseCostVal,
       purchasedQty: parseInt(document.getElementById('pm-purchased-qty')?.value) || (existingP ? existingP.purchasedQty : 0),
       bonusQty: parseInt(document.getElementById('pm-bonus-qty')?.value) || (existingP ? (existingP.bonusQty || 0) : 0),
-      availableQty: existingP ? existingP.availableQty : (parseInt(document.getElementById('pm-purchased-qty')?.value) || 0),
+      availableQty: (existingP && existingP.availableQty > 0) ? existingP.availableQty : (parseInt(document.getElementById('pm-purchased-qty')?.value) || (existingP ? existingP.availableQty : 0)),
       minStockLevel: existingP ? existingP.minStockLevel : 10,
       rackNumber: document.getElementById('pm-rack')?.value || ''
     };

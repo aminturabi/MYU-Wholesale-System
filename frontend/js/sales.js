@@ -82,12 +82,14 @@ class SalesModule {
       const saleId = s.id || s.invoiceNumber;
       const isExpanded = this.expandedSaleIds && this.expandedSaleIds.has(saleId);
       let totalProfit = 0;
+      let totalGrossTP = 0;
       const totalNet = parseFloat(s.netAmount) || 0;
       (s.items || []).forEach(item => {
         const q = parseInt(item.quantity) || 0;
         const bns = parseInt(item.bonus) || 0;
         const price = parseFloat(item.price) || 0;
         const tp = parseFloat(item.tp || item.tradePrice) || price;
+        totalGrossTP += (q * tp);
         const dis = parseFloat(item.discountPercent !== undefined ? item.discountPercent : item.discount) || 0;
         const ext = parseFloat(item.extPercent) || 0;
         const tax = parseFloat(item.taxPercent) || 0;
@@ -98,7 +100,7 @@ class SalesModule {
       });
       if (!totalProfit && s.totalProfit !== undefined) totalProfit = parseFloat(s.totalProfit);
       totalProfit = Utils.round(totalProfit, 2);
-      const marginPercent = totalNet > 0 ? Utils.round((totalProfit / totalNet) * 100, 1) : 0;
+      const marginPercent = totalGrossTP > 0 ? Utils.round((totalProfit / totalGrossTP) * 100, 1) : (totalNet > 0 ? Utils.round((totalProfit / totalNet) * 100, 1) : 0);
       const isProfitPositive = totalProfit >= 0;
       const profitSign = isProfitPositive ? '+' : '';
       const marginBadge = `
@@ -369,6 +371,7 @@ class SalesModule {
     let totalQtySum = 0;
     let totalBnsSum = 0;
     let totalOverallQty = 0;
+    let calculatedTaxSum = 0;
 
     const fmtNum = (v) => {
       const n = parseFloat(v) || 0;
@@ -387,13 +390,21 @@ class SalesModule {
       const tp = parseFloat(item.tp || item.tradePrice) || (unitPrice || 0);
       const dis = parseFloat(item.discountPercent !== undefined ? item.discountPercent : item.discount) || 0;
       const ext = parseFloat(item.extPercent) || 0;
-      const tax = parseFloat(item.taxPercent) || 0;
+      const tax = parseFloat(item.taxPercent !== undefined ? item.taxPercent : item.advTaxPercent) || 0;
 
       const purchaseCost = parseFloat(item.purchaseCost) || (tp * 0.85);
       const purchaseDiscount = parseFloat(item.purchaseDiscountPercent !== undefined ? item.purchaseDiscountPercent : (item.purchaseDiscount || 0)) || (tp > 0 ? Utils.round(((tp - purchaseCost) / tp) * 100, 2) : 0);
       const calc = Utils.calcWholesaleLine ? Utils.calcWholesaleLine(q, unitPrice, bns, dis, ext, tax, tp, purchaseCost, purchaseDiscount) : {
-        netUnitPrice: unitPrice, lineAmount: parseFloat(item.totalAmount) || 0, profit: 0, marginPercent: 0
+        netUnitPrice: unitPrice, lineAmount: parseFloat(item.totalAmount) || 0, profit: 0, marginPercent: 0, taxAmount: 0
       };
+
+      if (item.taxAmount !== undefined && !isNaN(parseFloat(item.taxAmount))) {
+        calculatedTaxSum += parseFloat(item.taxAmount);
+      } else if (item.advTaxAmount !== undefined && !isNaN(parseFloat(item.advTaxAmount))) {
+        calculatedTaxSum += parseFloat(item.advTaxAmount);
+      } else {
+        calculatedTaxSum += (calc.taxAmount || 0);
+      }
 
       const lineProfit = item.itemProfit !== undefined ? parseFloat(item.itemProfit) : (calc.profit !== undefined ? calc.profit : 0);
       const lineMargin = item.marginPercent !== undefined ? parseFloat(item.marginPercent) : (item.realizedMarginPercent !== undefined ? parseFloat(item.realizedMarginPercent) : (calc.marginPercent !== undefined ? calc.marginPercent : (tp > 0 && q > 0 ? Utils.round((lineProfit / (q * tp)) * 100, 1) : 0)));
@@ -434,9 +445,12 @@ class SalesModule {
 
     let totalProfitSum = sale.totalProfit !== undefined ? parseFloat(sale.totalProfit) : (sale.items || []).reduce((acc, it) => acc + (parseFloat(it.itemProfit) || 0), 0);
     let totalGrossTP = (sale.items || []).reduce((sum, it) => sum + ((parseInt(it.quantity) || 0) * (parseFloat(it.tp || it.price) || 0)), 0) || parseFloat(sale.grossTotal) || parseFloat(sale.netAmount) || 0;
-    let totalMarginPercent = totalGrossTP > 0 ? Utils.round((totalProfitSum / totalGrossTP) * 100, 1) : 0;
+    let totalMarginPercent = totalGrossTP > 0 ? Utils.round((totalProfitSum / totalGrossTP) * 100, 1) : (parseFloat(sale.netAmount) > 0 ? Utils.round((totalProfitSum / parseFloat(sale.netAmount)) * 100, 1) : 0);
     const isTotalProfitPositive = totalProfitSum >= 0;
     const totalProfitSign = isTotalProfitPositive ? '+' : '';
+
+    let totalTaxSum = sale.tax !== undefined && parseFloat(sale.tax) > 0 ? parseFloat(sale.tax) : (sale.totalTax !== undefined && parseFloat(sale.totalTax) > 0 ? parseFloat(sale.totalTax) : calculatedTaxSum);
+    totalTaxSum = Utils.round(totalTaxSum, 2);
 
     const amtInWords = Utils.numberToWords ? Utils.numberToWords(sale.netAmount) : "";
 
@@ -498,7 +512,7 @@ class SalesModule {
                     <th style="padding: 5px 2px; text-align: center; font-weight: 700; color: #334155; white-space: nowrap;">Ext%</th>
                     <th style="padding: 5px 2px; text-align: center; font-weight: 700; color: #334155; white-space: nowrap;">Adv.Tax%</th>
                     <th style="padding: 5px 3px; text-align: right; font-weight: 700; color: #334155; white-space: nowrap;">NET</th>
-                    <th style="padding: 5px 3px; text-align: right; font-weight: 700; color: #334155; white-space: nowrap;">AMOUNT</th>
+                    <th style="padding: 5px 3px; text-align: right; font-weight: 800; color: #0f172a; white-space: nowrap;">AMOUNT</th>
                     ${!isForPrint ? `<th style="padding: 5px 3px; text-align: center; font-weight: 700; color: #334155; white-space: nowrap;">Margin / Profit</th>` : ''}
                   </tr>
                 </thead>
@@ -544,6 +558,10 @@ class SalesModule {
                   </div>
                   <div style="font-size: 0.75rem; color: #64748b; font-style: italic; margin-bottom: 6px; line-height: 1.2;">
                     Amount In Words: ${amtInWords}
+                  </div>
+                  <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #475569; margin-bottom: 2px;">
+                    <span>Total Tax (Adv. Tax)</span>
+                    <span style="font-weight: 700; color: #6366f1;">${Utils.formatCurrency(totalTaxSum, settings.currency)}</span>
                   </div>
                   <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #475569; margin-bottom: 2px;">
                     <span>Received Amount</span>

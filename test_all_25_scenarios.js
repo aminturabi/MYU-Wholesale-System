@@ -83,25 +83,25 @@ check(3, "Partially Paid Sale",
 // 4. Sale with primary discount (10%)
 const lineDisc = Utils.calcWholesaleLine(10, 100, 0, 10, 0, 0, 100, 70, 30);
 check(4, "Sale with Primary Discount",
-  lineDisc.grossSubtotal === 1000 && lineDisc.disAmount === 100 && lineDisc.taxableBase === 900 && lineDisc.lineAmount === 900 && lineDisc.profit === 180
+  lineDisc.grossSubtotal === 1000 && lineDisc.disAmount === 100 && lineDisc.taxableBase === 900 && lineDisc.lineAmount === 900 && lineDisc.profit === 200
 );
 
 // 5. Sale with primary (10%) + extra discount (5%)
 const lineExt = Utils.calcWholesaleLine(10, 100, 0, 10, 5, 0, 100, 70, 30);
 check(5, "Sale with Primary + Extra Discount (extra applied on remaining after primary)",
-  lineExt.grossSubtotal === 1000 && lineExt.disAmount === 100 && lineExt.extAmount === 45 && lineExt.taxableBase === 855 && lineExt.profit === 128.25
+  lineExt.grossSubtotal === 1000 && lineExt.disAmount === 100 && lineExt.extAmount === 45 && lineExt.taxableBase === 855 && lineExt.profit === 155
 );
 
 // 6. Taxable sale with Tax (17%)
 const lineTax = Utils.calcWholesaleLine(10, 100, 0, 0, 0, 17, 100, 70, 30);
 check(6, "Taxable sale with Tax",
-  lineTax.taxableBase === 1000 && lineTax.taxAmount === 170 && lineTax.lineAmount === 1170 && lineTax.profit === 351
+  lineTax.taxableBase === 1000 && lineTax.taxAmount === 170 && lineTax.lineAmount === 1170 && lineTax.profit === 300
 );
 
 // 7. Sale with bonus units (10 sold + 2 bonus)
 const lineBonus = Utils.calcWholesaleLine(10, 100, 2, 0, 0, 0, 100, 70, 30);
 check(7, "Sale with Bonus Units",
-  lineBonus.stockDeduction === 12 && lineBonus.profit === 300
+  lineBonus.stockDeduction === 12 && lineBonus.cogs === 840 && lineBonus.profit === 160
 );
 
 // 8. Multiple products on one invoice

@@ -27,10 +27,13 @@ class BillingModule {
       });
 
       searchInput.addEventListener('focus', (e) => {
-        const q = e.target.value.toLowerCase().trim();
-        if (q) {
-          this.renderSearchResults(q);
-        }
+        const q = (e.target.value || '').toLowerCase().trim();
+        this.renderSearchResults(q);
+      });
+
+      searchInput.addEventListener('click', (e) => {
+        const q = (e.target.value || '').toLowerCase().trim();
+        this.renderSearchResults(q);
       });
 
       searchInput.addEventListener('keydown', (e) => {
@@ -227,32 +230,35 @@ class BillingModule {
     this.highlightSearchResult(items, idx);
   }
 
-  renderSearchResults(query) {
+  renderSearchResults(query = '') {
     const dropdown = document.getElementById('pos-search-results') || document.getElementById('product-search-results');
     if (!dropdown) return;
 
-    if (!query) {
-      this.hideSearchResults();
-      return;
-    }
-
     const products = (storage && typeof storage.getProducts === 'function') ? storage.getProducts() : [];
-    const filtered = products.filter(p => {
-      const q = query.toLowerCase();
-      return (p.name || '').toLowerCase().includes(q) ||
-        (p.genericName || '').toLowerCase().includes(q) ||
-        (p.itemNo || '').toLowerCase().includes(q) ||
-        (p.batchNumber || '').toLowerCase().includes(q) ||
-        (p.company || '').toLowerCase().includes(q) ||
-        (p.brand || '').toLowerCase().includes(q) ||
-        (p.category || '').toLowerCase().includes(q);
-    });
+    const q = (query || '').toLowerCase().trim();
+
+    const filtered = q
+      ? products.filter(p => {
+        return (p.name || '').toLowerCase().includes(q) ||
+          (p.genericName || '').toLowerCase().includes(q) ||
+          (p.itemNo || '').toLowerCase().includes(q) ||
+          (p.barcode || '').toLowerCase().includes(q) ||
+          (p.batchNumber || '').toLowerCase().includes(q) ||
+          (p.company || '').toLowerCase().includes(q) ||
+          (p.brand || '').toLowerCase().includes(q) ||
+          (p.category || '').toLowerCase().includes(q);
+      })
+      : products.slice().reverse().slice(0, 15);
 
     if (!filtered.length) {
-      dropdown.innerHTML = `<div style="padding: 14px; text-align: center; color: var(--text-muted); font-size: 0.88rem; background: #ffffff;">No medicine found matching "${query}".</div>`;
-      dropdown.classList.add('active');
-      dropdown.style.display = 'block';
-      this.selectedSearchIndex = -1;
+      if (q) {
+        dropdown.innerHTML = `<div style="padding: 14px; text-align: center; color: var(--text-muted); font-size: 0.88rem; background: #ffffff;">No medicine found matching "${query}".</div>`;
+        dropdown.classList.add('active');
+        dropdown.style.display = 'block';
+        this.selectedSearchIndex = -1;
+      } else {
+        this.hideSearchResults();
+      }
       return;
     }
 
@@ -319,15 +325,13 @@ class BillingModule {
     }
 
     if (prod.availableQty <= 0) {
-      this.showToast(`Cannot add ${prod.name}! Item is Out of Stock (0 available).`, 'danger');
-      this.focusSearchInput();
-      return;
+      this.showToast(`Notice: ${prod.name} has 0 recorded stock in inventory. Added with warning.`, 'warning');
     }
 
     const existingIdx = this.cartItems.findIndex(ci => ci.productId === prod.id);
     if (existingIdx !== -1) {
       const newQty = this.cartItems[existingIdx].quantity + 1;
-      if (newQty > prod.availableQty) {
+      if (prod.availableQty > 0 && newQty > prod.availableQty) {
         this.showToast(`Insufficient stock! Only ${prod.availableQty} units available for ${prod.name}.`, 'warning');
         this.focusSearchInput();
         return;
@@ -335,16 +339,17 @@ class BillingModule {
       this.cartItems[existingIdx].quantity = newQty;
       this.updateItemTotal(existingIdx);
     } else {
-      const tpVal = parseFloat(prod.tp || prod.tradePrice) || (parseFloat(prod.salePrice) || 0);
+      const origTpVal = parseFloat(prod.tp || prod.tradePrice) || (parseFloat(prod.salePrice) || 0);
       const prodDefaultPrice = (prod.defaultPrice !== undefined && prod.defaultPrice !== null && prod.defaultPrice !== '' && !isNaN(parseFloat(prod.defaultPrice)) && parseFloat(prod.defaultPrice) > 0)
         ? parseFloat(prod.defaultPrice)
         : NaN;
-      const initialPrice = (!isNaN(prodDefaultPrice) && prodDefaultPrice >= 0) ? prodDefaultPrice : tpVal;
+      const effectiveTp = (!isNaN(prodDefaultPrice) && prodDefaultPrice > 0) ? prodDefaultPrice : origTpVal;
+      const initialPrice = effectiveTp;
 
       const purDiscVal = parseFloat(prod.purchaseDiscount !== undefined ? prod.purchaseDiscount : prod.discount) || (parseFloat(prod.purchaseDiscountPercent) || 0);
-      let costVal = (purDiscVal > 0 && tpVal > 0)
-        ? Utils.round(tpVal * (1 - purDiscVal / 100), 4)
-        : (parseFloat(prod.purchaseCost || prod.purchasePrice || prod.costPrice) || (tpVal * 0.85));
+      let costVal = (purDiscVal > 0 && effectiveTp > 0)
+        ? Utils.round(effectiveTp * (1 - purDiscVal / 100), 4)
+        : (parseFloat(prod.purchaseCost || prod.purchasePrice || prod.costPrice) || (effectiveTp * 0.85));
       const defaultTax = parseFloat(prod.advanceTax !== undefined ? prod.advanceTax : (prod.taxPercent !== undefined ? prod.taxPercent : (prod.tax !== undefined ? prod.tax : 0))) || 0;
 
       const item = {
@@ -360,8 +365,10 @@ class BillingModule {
         quantity: 1,
         bonus: 0,
         price: initialPrice,
-        tp: tpVal,
-        tradePrice: tpVal,
+        defaultPrice: !isNaN(prodDefaultPrice) ? prodDefaultPrice : '',
+        origTp: origTpVal,
+        tp: effectiveTp,
+        tradePrice: effectiveTp,
         purchaseCost: costVal,
         purchaseDiscountPercent: purDiscVal,
         discountPercent: 0, // Independent Customer Sale Discount % entry
@@ -433,6 +440,11 @@ class BillingModule {
 
     if (row.cells[8]) row.cells[8].textContent = item.totalQty || item.quantity;
 
+    // TP sync (Cell 9)
+    if (row.cells[9]) {
+      row.cells[9].textContent = `Rs.${(item.tp || 0).toFixed(2)}`;
+    }
+
     // Price sync (Cell 10)
     if (row.cells[10]) {
       const pInp = row.cells[10].querySelector('input');
@@ -448,7 +460,7 @@ class BillingModule {
         defInp.value = (item.defaultPrice !== undefined && item.defaultPrice !== null && item.defaultPrice !== '') ? item.defaultPrice : '';
       }
     }
-    
+
     // Net Unit Price Cell (Cell 15)
     if (row.cells[15]) {
       row.cells[15].innerHTML = `
@@ -533,12 +545,18 @@ class BillingModule {
     if (!this.cartItems[index]) return;
     const item = this.cartItems[index];
     const parsed = parseFloat(defPriceStr);
-    if (!isNaN(parsed) && parsed >= 0 && defPriceStr.trim() !== '') {
+    if (!isNaN(parsed) && parsed > 0 && defPriceStr.trim() !== '') {
       item.defaultPrice = parsed;
+      item.tp = parsed;
+      item.tradePrice = parsed;
       item.price = parsed;
     } else {
       item.defaultPrice = '';
-      item.price = item.tp || 0;
+      const prod = (storage && typeof storage.getProducts === 'function') ? storage.getProducts().find(p => p.id === item.productId) : null;
+      const origTp = prod ? (parseFloat(prod.tp || prod.tradePrice) || parseFloat(prod.salePrice) || 0) : (item.origTp || item.tp || 0);
+      item.tp = origTp;
+      item.tradePrice = origTp;
+      item.price = origTp;
     }
     this.updateItemTotal(index);
     this.updateRowDom(index);
@@ -575,11 +593,11 @@ class BillingModule {
 
     // Purchase Discount %: derived from TP & Cost
     const tpRef = parseFloat(item.tp || item.price) || 0;
-    const purchaseDis = item.purchaseDiscountPercent !== undefined && item.purchaseDiscountPercent !== 0 
-      ? parseFloat(item.purchaseDiscountPercent) 
+    const purchaseDis = item.purchaseDiscountPercent !== undefined && item.purchaseDiscountPercent !== 0
+      ? parseFloat(item.purchaseDiscountPercent)
       : (tpRef > 0 && item.purchaseCost ? Utils.round(((tpRef - item.purchaseCost) / tpRef) * 100, 2) : 0);
-    const costRef = (purchaseDis > 0 && tpRef > 0) 
-      ? Utils.round(tpRef * (1 - purchaseDis / 100), 4) 
+    const costRef = (purchaseDis > 0 && tpRef > 0)
+      ? Utils.round(tpRef * (1 - purchaseDis / 100), 4)
       : (parseFloat(item.purchaseCost) || (tpRef * 0.85));
     item.purchaseCost = costRef;
     item.purchaseDiscountPercent = purchaseDis;
@@ -614,7 +632,7 @@ class BillingModule {
 
     // Real-time Below-Cost / Negative Margin Evaluation
     const isBelowCost = (item.marginPercent < 0 || item.profit < 0);
-    
+
     item.isLoss = isBelowCost;
     item.unitLoss = isBelowCost ? Math.abs(calc.unitProfit) : 0;
     item.totalLoss = isBelowCost ? Math.abs(calc.profit) : 0;
@@ -847,8 +865,8 @@ class BillingModule {
       const price = parseFloat(ci.price || ci.unitPrice || ci.salePrice) || 0;
       const tp = parseFloat(ci.tp || ci.tradePrice) || (price || 0);
       const purchaseCost = parseFloat(ci.purchaseCost || ci.purchasePrice || ci.costPrice) || (tp * 0.85);
-      const purDisc = ci.purchaseDiscountPercent !== undefined 
-        ? parseFloat(ci.purchaseDiscountPercent) 
+      const purDisc = ci.purchaseDiscountPercent !== undefined
+        ? parseFloat(ci.purchaseDiscountPercent)
         : (tp > 0 && purchaseCost > 0 && purchaseCost < tp ? Utils.round(((tp - purchaseCost) / tp) * 100, 2) : 0);
       const discPercent = parseFloat(ci.discountPercent) || 0;
       const extPercent = parseFloat(ci.extPercent) || 0;

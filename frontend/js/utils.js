@@ -110,12 +110,12 @@ const Utils = {
           // 3. Inventory & COGS Tracking
           const totalQty = q + bns;
           const totalCogs = Utils.round(totalQty * unitCost, 2);
-          const lineProfit = Utils.round(lineAmount - totalCogs, 2);
           const lineCogs = totalCogs;
-          const marginPercent = lineAmount > 0 ? Utils.round((lineProfit / lineAmount) * 100, 2) : 0;
+          const lineProfit = Utils.round(taxableBase - totalCogs, 2);
+          const marginPercent = Utils.round(purDisc - (dis + ext), 2);
           const unitProfit = q > 0 ? Utils.round(lineProfit / q, 4) : 0;
           const purchaseDiscountPercent = purDisc;
-          const effectiveSaleDiscountPercent = effectivePrice > 0 ? Utils.round((totalUnitDiscount / effectivePrice) * 100, 2) : 0;
+          const effectiveSaleDiscountPercent = tradePrice > 0 ? Utils.round((totalUnitDiscount / tradePrice) * 100, 2) : 0;
           const realizedMarginPercent = marginPercent;
 
           return {
